@@ -119,6 +119,79 @@
       color: var(--muted);
     }
 
+    .arrow {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0 4px;
+    }
+
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .progress-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--ghost);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .step-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .step.active .step-number {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .step.active .step-label {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .step.completed .step-number {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .step.completed .step-label {
+      color: var(--muted);
+    }
+
     .step:not(.active):not(.completed) {
       display: none;
     }
@@ -725,34 +798,43 @@
 </head>
 <body>
   <div class="frame">
-   <header>
-     <div class="progress-indicator">
-       <div class="step active" id="step1">
-         <span class="step-label">Demographics</span>
-       </div>
-       <div class="arrow">→</div>
-       <div class="step" id="step2">
-         <span class="step-label">Brand Style</span>
-       </div>
-       <div class="arrow">→</div>
-       <div class="step" id="step3">
-         <span class="step-label">Generate</span>
-       </div>
-       <div class="arrow">→</div>
-       <div class="step" id="step4">
-         <span class="step-label">Edit</span>
-       </div>
-     </div>
-     <div class="brand">
-       <div class="logo" aria-label="xAI logo">
-         <img src="/static/Xicon.jpg" alt="X" loading="lazy">
-       </div>
-       <div class="brand-label">
-         <div class="brand-title">Grok X Ads</div>
-         <div class="brand-sub">AI-Powered Ad Creation</div>
-       </div>
-     </div>
-   </header>
+    <header class="sticky-header">
+      <div class="brand">
+        <div class="logo" aria-label="xAI logo">
+          <img src="/static/Xicon.jpg" alt="X" loading="lazy">
+        </div>
+        <div class="brand-label">
+          <div class="brand-title">Grok X Ads</div>
+          <div class="brand-sub">Product → Demographics → Brand Style → Ad image</div>
+        </div>
+      </div>
+      <div class="progress-indicator">
+        <div class="step active" id="step1">
+          <span class="step-number">1</span>
+          <span class="step-label">Demographics</span>
+        </div>
+        <div class="arrow">→</div>
+        <div class="step" id="step2">
+          <span class="step-number">2</span>
+          <span class="step-label">Brand Style</span>
+        </div>
+        <div class="arrow">→</div>
+        <div class="step" id="step3">
+          <span class="step-number">3</span>
+          <span class="step-label">Generate</span>
+        </div>
+        <div class="arrow">→</div>
+        <div class="step" id="step4">
+          <span class="step-number">4</span>
+          <span class="step-label">Edit</span>
+        </div>
+        <div class="arrow">→</div>
+        <div class="step" id="step5">
+          <span class="step-number">5</span>
+          <span class="step-label">Preview</span>
+        </div>
+      </div>
+    </header>
 
     <section id="pinnedRecap" class="panel hidden">
       <div class="panel-header">
@@ -900,7 +982,6 @@
     <section id="editorSection" class="panel hidden">
       <div class="panel-header">
         <div class="panel-title">Step 5 · Edit ad image</div>
-        <span class="pill">editor</span>
       </div>
       <div class="editor-wrapper">
         <div class="canvas-container">
@@ -1437,30 +1518,6 @@
     };
 
 
-    const startRotatingMessages = (messages, interval = 2000) => {
-      const statusPill = elements.statusPill;
-      if (!statusPill) return () => {};
-
-      let messageIndex = 0;
-
-      const rotateMessage = () => {
-        if (statusPill && messages[messageIndex]) {
-          statusPill.textContent = messages[messageIndex];
-          messageIndex = (messageIndex + 1) % messages.length;
-        }
-      };
-
-      rotateMessage();
-      const intervalId = setInterval(rotateMessage, interval);
-
-      return () => {
-        clearInterval(intervalId);
-        if (statusPill) {
-          statusPill.textContent = '';
-        }
-      };
-    };
-
     // Optimized fetch with abort controller and keepalive
     let currentController = null;
     let currentBrandStyleController = null;
@@ -1508,13 +1565,7 @@
 
         setBrandStyleFields(result);
         elements.brandStylePanel.classList.remove('hidden');
-<<<<<<< HEAD
-        // elements.brandStyleBadge.textContent = 'autofill by Grok';
-=======
-        elements.brandStyleBadge.textContent = 'autofill by Grok';
->>>>>>> 715eac0 (loading fixed)
         updateProgressIndicator(2); // Stay on step 2 while analyzing
-        elements.brandStyleBadge.textContent = 'autofill by Grok';
 
         console.log(`Brand style API call completed in ${elapsed}s`);
       } catch (error) {
@@ -1584,15 +1635,7 @@
 
         setEditFields(result, prompt);
         elements.editPanel.classList.remove('hidden');
-<<<<<<< HEAD
-        // elements.autofillBadge.textContent = 'autofill by Grok';
         updateProgressIndicator(2); // Move to step 2
-        elements.autofillBadge.textContent = 'autofill by Grok';
-        
-=======
-        elements.autofillBadge.textContent = 'autofill by Grok';
-        updateProgressIndicator(2); // Move to step 2
->>>>>>> 715eac0 (loading fixed)
         console.log(`API call completed in ${elapsed}s`);
       } catch (error) {
         if (error.name === 'AbortError') {
@@ -1763,9 +1806,12 @@
     // Progress indicator functions
     function updateProgressIndicator(currentStep) {
       // Reset all steps
-      for (let i = 1; i <= 4; i++) {
+      for (let i = 1; i <= 5; i++) {
         const stepEl = document.getElementById(`step${i}`);
-        stepEl.classList.remove('active', 'completed');
+        if (stepEl) {
+          stepEl.classList.remove('active', 'completed');
+        }
+      }
       }
 
       // Set current step as active
@@ -2065,3 +2111,4 @@
   </script>
 </body>
 </html>
+
