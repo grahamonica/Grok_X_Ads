@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
 
 const PREVIEW_COUNT = 10;
@@ -68,6 +68,8 @@ const PreviewNode = memo(({ data, selected }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const shouldLoadFeed = statusClass !== 'pending';
+  const feedRef = useRef(null);
+  const scrollPositionRef = useRef(0);
 
   // Load feed data (first 7 tweets; 3 positions will be ads -> total 10 items)
   useEffect(() => {
@@ -88,7 +90,7 @@ const PreviewNode = memo(({ data, selected }) => {
       try {
         const origin = window.location.origin;
         const primaryUrl = `${origin}/data/foodie_homechef.jsonl`;
-        const fallbackUrl = `${origin}/app/data/foodie_homechef.jsonl`;
+        const fallbackUrl = `${origin}/app/data/foodie_homechef.jsonl`
 
         let res = await fetch(primaryUrl);
         if (!res.ok) {
@@ -113,6 +115,55 @@ const PreviewNode = memo(({ data, selected }) => {
   }, [shouldLoadFeed]);
 
   const displayFeed = useMemo(() => buildDisplayFeed(feedItems, imageUrl), [feedItems, imageUrl]);
+  
+  // Duplicate feed for seamless looping
+  const duplicatedFeed = useMemo(() => [...displayFeed, ...displayFeed], [displayFeed]);
+
+  // Autoscroll animation
+  useEffect(() => {
+    if (!shouldLoadFeed || loading || error || !feedRef.current || displayFeed.length === 0) {
+      return;
+    }
+
+    const feedElement = feedRef.current;
+    const scrollSpeed = 0.8; // pixels per frame (higher = faster)
+    let animationFrameId = null;
+    let lastTime = performance.now();
+
+    const animate = (currentTime) => {
+      if (!feedElement) return;
+
+      const deltaTime = Math.min(currentTime - lastTime, 16); // Cap at 16ms for 60fps
+      lastTime = currentTime;
+      
+      // Calculate scroll position
+      scrollPositionRef.current += scrollSpeed * (deltaTime / 16); // normalize to 60fps
+      
+      // Get the height of a single feed (before duplication)
+      const singleFeedHeight = feedElement.scrollHeight / 2;
+      
+      // If we've scrolled past one full feed, reset to start seamlessly
+      if (scrollPositionRef.current >= singleFeedHeight) {
+        scrollPositionRef.current = scrollPositionRef.current - singleFeedHeight;
+      }
+      
+      feedElement.scrollTop = scrollPositionRef.current;
+      
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    // Small delay before starting animation
+    const startTimeout = setTimeout(() => {
+      animationFrameId = requestAnimationFrame(animate);
+    }, 500);
+
+    return () => {
+      clearTimeout(startTimeout);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [shouldLoadFeed, loading, error, displayFeed.length]);
 
   return (
     <div className={`workflow-node ${statusClass} ${selected ? 'selected' : ''}`} style={{ minWidth: '360px' }}>
@@ -150,7 +201,16 @@ const PreviewNode = memo(({ data, selected }) => {
           </div>
 
           {/* Feed */}
-          <div className="iphone-feed">
+          <div 
+            ref={feedRef}
+            className="iphone-feed"
+            style={{ 
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              scrollBehavior: 'auto',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             {statusClass === 'pending' && (
               <div className="iphone-feed-placeholder" style={{ width: '100%' }}>
                 Complete previous steps to preview the feed on X!
@@ -160,10 +220,10 @@ const PreviewNode = memo(({ data, selected }) => {
               <>
                 {loading && <div className="iphone-feed-placeholder">Loading feed...</div>}
                 {error && <div className="iphone-feed-placeholder">{error}</div>}
-                {!loading && !error && displayFeed.map((item) => {
+                {!loading && !error && duplicatedFeed.map((item, index) => {
                   if (item.type === 'ad') {
                     return (
-                      <div key={item.key} className="tweet-card promoted">
+                      <div key={`${item.key}-${index}`} className="tweet-card promoted">
                         <div className="tweet-header">
                           <div className="tweet-avatar" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}>🔥</div>
                           <div className="tweet-author">
@@ -212,7 +272,7 @@ const PreviewNode = memo(({ data, selected }) => {
                   }
 
                   return (
-                    <div key={item.key} className="tweet-card">
+                    <div key={`${item.key}-${index}`} className="tweet-card">
                       <div className="tweet-header">
                         <div className="tweet-avatar">🍳</div>
                         <div className="tweet-author">

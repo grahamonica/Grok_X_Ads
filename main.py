@@ -236,13 +236,16 @@ def build_image_prompt(request: AdImageRequest) -> str:
 
     style_text = f" Brand style: {', '.join(style_parts)}." if style_parts else ""
 
-    # Concise requirements
+    # Concise requirements - STRICT NO TEXT POLICY
     requirements = (
-        "No text in image, background, or reflections. No logos. No people unless depicting target audience is applicable. Product-focused. "
-        "Keep product depiction accurate and close to real product, minimize hallucination.  keep it consistent with this brand's identity, and target the target audience heavily "
-        "Bottom third: simple/uncluttered for text overlay. "
-        "Upper two-thirds: product. "
-        "Suggest optimal text placement coordinates for slogan (top text) and company name (bottom text) as percentages from top-left corner."
+        "CRITICAL: Absolutely NO text, letters, numbers, words, symbols, or typography of any kind visible in the image. "
+        "NO text on product labels, packaging, screens, signs, backgrounds, reflections, or anywhere else. "
+        "NO logos, brand names, or written content. NO people unless depicting target audience is applicable. "
+        "Product-focused image only. Keep product depiction accurate and close to real product, minimize hallucination. "
+        "Keep it consistent with this brand's identity, and target the target audience heavily. "
+        "Bottom third: simple/uncluttered solid color or gradient background for text overlay. "
+        "Upper two-thirds: product prominently displayed. "
+        "The image must be completely text-free - any visible text, letters, or words will make the image unusable."
     )
 
     prompt = f"{requirements}{style_text}{product_focus}{demo_text}"
