@@ -122,11 +122,10 @@ const PreviewNode = memo(({ data, selected }) => {
       </div>
 
       {/* Input Handle */}
-      <Handle type="target" position={Position.Left} id="input" style={{ background: '#8b5cf6' }} />
+      <Handle type="target" position={Position.Left} id="input" style={{ background: '#ffffff' }} />
 
       {/* Header */}
       <div className="node-header">
-        <div className="node-header-icon">📱</div>
         <div className="node-header-title">Preview</div>
         <div className="node-header-info">ⓘ</div>
         <div className="node-info-tooltip">iPhone feed preview. Every 3rd card is your promoted ad.</div>

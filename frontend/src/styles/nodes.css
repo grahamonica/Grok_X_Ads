@@ -5,33 +5,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #0f1116;
-  --bg-2: #11151c;
-  --bg-3: #141923;
-  --panel: #161b24;
-  --panel-strong: #1b202b;
-  --card: #1e2530;
-  --ink: #e7e9ea;
-  --muted: #9ba3ae;
-  --subtle: #7a8290;
-  --border: #242c37;
-  --border-strong: #2d3643;
-  --accent: #1d9bf0;
-  --accent-2: #1d9bf0;
-  --accent-hot: #1d9bf0;
-  --success: #3dd598;
-  --warning: #f7b731;
-  --danger: #f07178;
-  --glow-1: 0 0 24px rgba(29, 155, 240, 0.2);
-  --glow-2: 0 0 18px rgba(29, 155, 240, 0.12);
-  --shadow-soft: 0 12px 36px rgba(0, 0, 0, 0.35);
+  --bg: #050505;
+  --bg-2: #0a0a0a;
+  --bg-3: #0f0f10;
+  --panel: #101013;
+  --panel-strong: #131318;
+  --card: #16171f;
+  --ink: #f5f5f5;
+  --muted: #b5b5b5;
+  --subtle: #8a8a8a;
+  --border: #1f1f23;
+  --border-strong: #2a2a30;
+  --accent: #ffffff;
+  --accent-2: #ffffff;
+  --accent-hot: #ffffff;
+  --success: #e0e0e0;
+  --warning: #f0f0f0;
+  --danger: #f5c6c6;
+  --glow-1: 0 0 24px rgba(255, 255, 255, 0.16);
+  --glow-2: 0 0 18px rgba(255, 255, 255, 0.12);
+  --shadow-soft: 0 12px 36px rgba(0, 0, 0, 0.4);
   --glass: rgba(255, 255, 255, 0.02);
-  --glass-strong: rgba(255, 255, 255, 0.04);
+  --glass-strong: rgba(255, 255, 255, 0.05);
   --edge-start: var(--accent);
   --edge-end: var(--accent);
   --node-active: var(--accent);
   --node-completed: var(--success);
-  --node-pending: #1b2431;
+  --node-pending: #1b1b22;
 }
 
 * {
@@ -60,6 +60,52 @@ body {
   min-height: 100vh;
   color: var(--ink);
   overflow: hidden;
+}
+
+.workflow-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.workflow-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.xai-mark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xai-text {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 14px;
+}
+
+.workflow-topbar-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.flow-shell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
 }
 
 .app-backdrop::before,

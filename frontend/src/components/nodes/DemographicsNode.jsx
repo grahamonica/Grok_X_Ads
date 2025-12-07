@@ -81,12 +81,11 @@ const DemographicsNode = memo(({ data, selected }) => {
         type="target"
         position={Position.Left}
         id="input"
-        style={{ background: '#8b5cf6' }}
+        style={{ background: '#ffffff' }}
       />
 
       {/* Header */}
       <div className="node-header">
-        <div className="node-header-icon">👥</div>
         <div className="node-header-title">Demographics</div>
         <div className="node-header-info">ⓘ</div>
         <div className="node-info-tooltip">
@@ -179,7 +178,7 @@ const DemographicsNode = memo(({ data, selected }) => {
         type="source"
         position={Position.Right}
         id="output"
-        style={{ background: '#6366f1' }}
+        style={{ background: '#ffffff' }}
       />
     </div>
   );
