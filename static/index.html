@@ -1201,7 +1201,13 @@
       editorCompanyOpacityValue: document.getElementById('editorCompanyOpacityValue'),
       editorCompanyColorPreview: document.getElementById('editorCompanyColorPreview'),
       editorDownloadBtn: document.getElementById('editorDownloadBtn'),
-      editorResetBtn: document.getElementById('editorResetBtn')
+      editorResetBtn: document.getElementById('editorResetBtn'),
+      previewSection: document.getElementById('previewSection'),
+      previewFeed: document.getElementById('previewFeed'),
+      addColorBtn: document.getElementById('addColorBtn'),
+      colorPickers: document.getElementById('colorPickers'),
+      editFontStyle: document.getElementById('fontSearch'),
+      statusPill: document.getElementById('statusPill')
     };
 
     const ageRangeOptions = [
@@ -1244,6 +1250,18 @@
     const parseList = (input) => {
       const value = input.trim();
       return value ? value.split(',').map(item => item.trim()).filter(Boolean) : null;
+    };
+
+    // Preview (iPhone feed) constants/state
+    const PREVIEW_DATA_URL = '/static/iphone/foodie_homechef.jsonl';
+    const PREVIEW_BATCH_SIZE = 10;
+    const PREVIEW_AD_INTERVAL = 5;
+    const previewState = {
+      tweets: [],
+      index: 0,
+      totalPostsRendered: 0,
+      promotedImageUrl: null,
+      loaded: false,
     };
 
     // Initialize age select dropdown
@@ -1516,8 +1534,6 @@
         elements.fontOptions.classList.remove('hidden');
       }
     };
-
-
     // Optimized fetch with abort controller and keepalive
     let currentController = null;
     let currentBrandStyleController = null;
@@ -1905,6 +1921,177 @@
       elements.editorCompanyOverlay.style.transform = 'translate(-50%, -50%)';
     });
 
+    // ---------- Step 5 Preview (iPhone feed) ----------
+    const previewInitials = (name = '') => {
+      const parts = name.trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return '🍳';
+      return parts.slice(0, 2).map(p => p[0]).join('').toUpperCase();
+    };
+
+    const previewTimeAgo = (dateStr) => {
+      if (!dateStr) return '';
+      const now = new Date();
+      const date = new Date(dateStr);
+      const diff = Math.floor((now - date) / 1000);
+      if (diff < 60) return `${diff}s`;
+      if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+      return `${Math.floor(diff / 86400)}d`;
+    };
+
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    };
+
+    const previewGetMedia = (tweet, mediaMap) => {
+      const keys = tweet.attachments?.media_keys || [];
+      for (const key of keys) {
+        const media = mediaMap.get(key);
+        if (!media) continue;
+        if (media.type === 'photo' && media.url) return { type: 'photo', url: media.url };
+        if (media.type === 'video' && Array.isArray(media.variants)) {
+          const mp4s = media.variants
+            .filter(v => v.content_type === 'video/mp4' && v.url)
+            .sort((a, b) => (b.bit_rate || 0) - (a.bit_rate || 0));
+          if (mp4s.length) return { type: 'video', url: mp4s[0].url };
+        }
+      }
+      return null;
+    };
+
+    async function loadPreviewData() {
+      if (previewState.loaded) return;
+      const res = await fetch(PREVIEW_DATA_URL);
+      if (!res.ok) throw new Error('Failed to load preview data');
+      const raw = await res.text();
+      const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+      const collected = [];
+
+      for (let i = 0; i < Math.min(lines.length, PREVIEW_BATCH_SIZE); i++) {
+        try {
+          const entry = JSON.parse(lines[i]);
+          const tweet = entry.tweet;
+          if (!tweet) continue;
+          const mediaMap = new Map();
+          (entry.includes?.media || []).forEach(m => mediaMap.set(m.media_key, m));
+          const users = entry.includes?.users || [];
+          const author = users.find(u => u.id === tweet.author_id) || {};
+          collected.push({
+            id: tweet.id,
+            text: tweet.text || '',
+            authorName: author.name || 'Foodie',
+            authorHandle: author.username ? `@${author.username}` : '@foodie',
+            createdAt: tweet.created_at,
+            media: previewGetMedia(tweet, mediaMap),
+          });
+        } catch (err) {
+          console.warn('Skip bad preview line', i, err);
+        }
+      }
+
+      previewState.tweets = collected;
+      previewState.loaded = true;
+    }
+
+    const createPreviewCard = (tweet) => {
+      const card = document.createElement('div');
+      card.className = 'tweet';
+      const avatarBg = 'linear-gradient(135deg, #ff6b6b, #feca57)';
+      let mediaHtml = '';
+      if (tweet.media) {
+        if (tweet.media.type === 'photo') {
+          mediaHtml = `<div class="tweet-media"><img src="${tweet.media.url}" alt="tweet media" loading="lazy"></div>`;
+        } else if (tweet.media.type === 'video') {
+          mediaHtml = `<div class="tweet-media"><video src="${tweet.media.url}" controls playsinline preload="metadata"></video></div>`;
+        }
+      }
+      card.innerHTML = `
+        <div class="tweet-avatar" style="background:${avatarBg}">${previewInitials(tweet.authorName)}</div>
+        <div class="tweet-content">
+          <div class="tweet-header">
+            <span class="tweet-name">${escapeHtml(tweet.authorName)}</span>
+            <span class="tweet-handle">${escapeHtml(tweet.authorHandle)}</span>
+            <span class="tweet-time">${previewTimeAgo(tweet.createdAt)}</span>
+          </div>
+          <div class="tweet-text">${escapeHtml(tweet.text)}</div>
+          ${mediaHtml}
+          <div class="tweet-actions">
+            <div class="action reply">💬 <span>12</span></div>
+            <div class="action retweet">🔁 <span>34</span></div>
+            <div class="action like">❤️ <span>128</span></div>
+            <div class="action views">👁️ <span>2.4K</span></div>
+          </div>
+        </div>
+      `;
+      return card;
+    };
+
+    const createPromotedPreviewCard = (text) => {
+      const card = document.createElement('div');
+      card.className = 'tweet promoted';
+      const imgSrc = previewState.promotedImageUrl || '';
+      const mediaHtml = imgSrc
+        ? `<div class="tweet-media"><img src="${imgSrc}" alt="Ad image"></div>`
+        : `<div class="tweet-media" style="height:200px;display:grid;place-items:center;color:#71767b;">Generate the ad first to preview</div>`;
+      card.innerHTML = `
+        <div class="tweet-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">🔥</div>
+        <div class="tweet-content">
+          <div class="tweet-header">
+            <span class="tweet-name">Foodie Brands</span>
+            <span class="tweet-handle">@FoodieBrands</span>
+            <span class="tweet-time">Promoted</span>
+          </div>
+          <div class="promoted-badge">Promoted</div>
+          <div class="tweet-text">${escapeHtml(text || 'Your ad goes here')}</div>
+          ${mediaHtml}
+          <div class="tweet-actions">
+            <div class="action reply">💬 <span>18</span></div>
+            <div class="action retweet">🔁 <span>52</span></div>
+            <div class="action like">❤️ <span>210</span></div>
+            <div class="action views">👁️ <span>5.1K</span></div>
+          </div>
+        </div>
+      `;
+      return card;
+    };
+
+    function renderPreviewBatch() {
+      if (!previewState.tweets.length) return;
+      const feed = elements.previewFeed;
+      for (let i = 0; i < PREVIEW_BATCH_SIZE; i++) {
+        const tweet = previewState.tweets[previewState.index];
+        previewState.index = (previewState.index + 1) % previewState.tweets.length;
+        const card = createPreviewCard(tweet);
+        feed.appendChild(card);
+        previewState.totalPostsRendered++;
+        if (previewState.totalPostsRendered % PREVIEW_AD_INTERVAL === 0) {
+          const promotedCard = createPromotedPreviewCard(tweet.text);
+          feed.appendChild(promotedCard);
+          previewState.totalPostsRendered++;
+        }
+      }
+    }
+
+    async function showPreview() {
+      await loadPreviewData();
+      previewState.promotedImageUrl = window.previewImageUrl || previewState.promotedImageUrl;
+      previewState.index = 0;
+      previewState.totalPostsRendered = 0;
+      elements.previewFeed.innerHTML = '';
+      renderPreviewBatch();
+      elements.previewSection.classList.remove('hidden');
+      updateProgressIndicator(5);
+      const onScrollPreview = () => {
+        const { scrollTop, scrollHeight, clientHeight } = elements.previewFeed;
+        if (scrollHeight - scrollTop - clientHeight < 200) {
+          renderPreviewBatch();
+        }
+      };
+      elements.previewFeed.addEventListener('scroll', onScrollPreview);
+      elements.previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     elements.editorDownloadBtn.addEventListener('click', async () => {
       try {
         const canvas = document.createElement('canvas');
