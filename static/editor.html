@@ -388,8 +388,8 @@
   <script>
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    // Hardcoded image URL for now - use proxy to avoid CORS issues
-    const originalImageUrl = 'https://imgen.x.ai/xai-imgen/xai-tmp-imgen-c2cd28b2-c059-466d-abdb-136c88f3f153.jpeg';
+    // Get image URL from parameters, or use hardcoded fallback
+    const originalImageUrl = urlParams.get('image') || 'https://imgen.x.ai/xai-imgen/xai-tmp-imgen-c2cd28b2-c059-466d-abdb-136c88f3f153.jpeg';
     const imageUrl = `/proxy-image?image_url=${encodeURIComponent(originalImageUrl)}`;
     const slogan = urlParams.get('slogan') || '';
     const company = urlParams.get('company') || '';
