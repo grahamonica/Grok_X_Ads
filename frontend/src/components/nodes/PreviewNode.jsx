@@ -4,6 +4,22 @@ import { Handle, Position } from '@xyflow/react';
 const PREVIEW_COUNT = 10;
 const AD_INTERVAL = 3; // every 3rd item is the ad
 
+const findTweetMedia = (tweet, includes) => {
+  const keys = tweet?.attachments?.media_keys || [];
+  if (!keys.length) return null;
+
+  const mediaMap = new Map((includes?.media || []).map((m) => [m.media_key, m]));
+  for (const key of keys) {
+    const media = mediaMap.get(key);
+    if (!media) continue;
+    if (media.type === 'photo' && media.url) return { type: 'photo', url: media.url };
+    if (media.type === 'video' && media.preview_image_url) {
+      return { type: 'video', url: media.preview_image_url };
+    }
+  }
+  return null;
+};
+
 const parseJsonlFeed = (text, maxItems) => {
   const lines = text.split('\n').filter(Boolean);
   const tweets = [];
@@ -14,11 +30,13 @@ const parseJsonlFeed = (text, maxItems) => {
       const tweet = entry?.tweet;
       const users = entry?.includes?.users || [];
       const author = users.find((u) => u.id === tweet?.author_id) || {};
+      const media = findTweetMedia(tweet, entry?.includes);
       tweets.push({
         id: tweet?.id || Math.random().toString(36).slice(2),
         authorName: author.name || 'Foodie',
         authorHandle: author.username ? `@${author.username}` : '@foodie',
         text: tweet?.text || '',
+        media,
       });
     } catch (e) {
       // skip malformed
@@ -116,82 +134,126 @@ const PreviewNode = memo(({ data, selected }) => {
 
       {/* Content */}
       <div className="node-content">
-        {statusClass === 'pending' ? (
-          <div className="iphone-frame" style={{ alignItems: 'center', justifyContent: 'center' }}>
-            <div className="iphone-feed-placeholder" style={{ width: '100%' }}>
-              Complete previous steps to preview the feed on X!
+        <div className="iphone-screen">
+          {/* Status Bar */}
+          <div className="iphone-status">
+            <span className="iphone-time">9:41</span>
+            <div className="iphone-status-icons">
+              <span>📶</span>
+              <span>🔋</span>
             </div>
           </div>
-        ) : (
-          <div className="iphone-frame">
-            {/* Status Bar */}
-            <div className="iphone-status">
-              <span className="iphone-time">9:41</span>
-              <div className="iphone-status-icons">
-                <span>📶</span>
-                <span>🔋</span>
-              </div>
-            </div>
 
-            {/* Feed */}
-            <div className="iphone-feed">
-              {loading && <div className="iphone-feed-placeholder">Loading feed...</div>}
-              {error && <div className="iphone-feed-placeholder">{error}</div>}
-              {!loading && !error && displayFeed.map((item) => {
-                if (item.type === 'ad') {
-                  return (
-                    <div key={item.key} className="tweet-card promoted">
-                      <div className="tweet-header">
-                        <div className="tweet-avatar" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}>🔥</div>
-                        <div className="tweet-author">
-                          <div className="tweet-name-row">
-                            <span className="tweet-name">Your Brand</span>
-                            <span className="tweet-handle">@yourbrand</span>
+          {/* Top Tabs */}
+          <div className="iphone-tabs">
+            <div className="tab active">For you</div>
+            <div className="tab">Following</div>
+          </div>
+
+          {/* Feed */}
+          <div className="iphone-feed">
+            {statusClass === 'pending' && (
+              <div className="iphone-feed-placeholder" style={{ width: '100%' }}>
+                Complete previous steps to preview the feed on X!
+              </div>
+            )}
+            {statusClass !== 'pending' && (
+              <>
+                {loading && <div className="iphone-feed-placeholder">Loading feed...</div>}
+                {error && <div className="iphone-feed-placeholder">{error}</div>}
+                {!loading && !error && displayFeed.map((item) => {
+                  if (item.type === 'ad') {
+                    return (
+                      <div key={item.key} className="tweet-card promoted">
+                        <div className="tweet-header">
+                          <div className="tweet-avatar" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}>🔥</div>
+                          <div className="tweet-author">
+                            <div className="tweet-name-row">
+                              <span className="tweet-name">Your Brand</span>
+                              <span className="tweet-handle">@yourbrand</span>
+                            </div>
+                            <span className="tweet-promoted">Promoted</span>
                           </div>
-                          <span className="tweet-promoted">Promoted</span>
+                        </div>
+                        <div className="tweet-media">
+                          {imageUrl ? (
+                            <img src={`/proxy-image?image_url=${encodeURIComponent(imageUrl)}`} alt="Ad" />
+                          ) : (
+                            <div className="tweet-media-placeholder">Generate an image to preview</div>
+                          )}
+                        </div>
+                        <div className="tweet-actions">
+                          <span>💬 24</span>
+                          <span>🔁 89</span>
+                          <span>❤️ 312</span>
+                          <span>👁️ 5.2K</span>
                         </div>
                       </div>
-                      <div className="tweet-media">
-                        {imageUrl ? (
-                          <img src={`/proxy-image?image_url=${encodeURIComponent(imageUrl)}`} alt="Ad" />
-                        ) : (
-                          <div className="tweet-media-placeholder">Generate an image to preview</div>
-                        )}
+                    );
+                  }
+
+                  return (
+                    <div key={item.key} className="tweet-card">
+                      <div className="tweet-header">
+                        <div className="tweet-avatar">🍳</div>
+                        <div className="tweet-author">
+                          <div className="tweet-name-row">
+                            <span className="tweet-name">{item.authorName}</span>
+                            <span className="tweet-handle">{item.authorHandle}</span>
+                          </div>
+                        </div>
                       </div>
+                      <div className="tweet-text">{item.text || '...'}</div>
+                      {item.media?.url && (
+                        <div className="tweet-media">
+                          <img
+                            src={`/proxy-image?image_url=${encodeURIComponent(item.media.url)}`}
+                            alt="Tweet media"
+                          />
+                        </div>
+                      )}
                       <div className="tweet-actions">
-                        <span>💬 24</span>
-                        <span>🔁 89</span>
-                        <span>❤️ 312</span>
-                        <span>👁️ 5.2K</span>
+                        <span>💬 12</span>
+                        <span>🔁 34</span>
+                        <span>❤️ 128</span>
+                        <span>👁️ 2.4K</span>
                       </div>
                     </div>
                   );
-                }
-
-                return (
-                  <div key={item.key} className="tweet-card">
-                    <div className="tweet-header">
-                      <div className="tweet-avatar">🍳</div>
-                      <div className="tweet-author">
-                        <div className="tweet-name-row">
-                          <span className="tweet-name">{item.authorName}</span>
-                          <span className="tweet-handle">{item.authorHandle}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="tweet-text">{item.text || '...'}</div>
-                    <div className="tweet-actions">
-                      <span>💬 12</span>
-                      <span>🔁 34</span>
-                      <span>❤️ 128</span>
-                      <span>👁️ 2.4K</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                })}
+              </>
+            )}
           </div>
-        )}
+
+          {/* Bottom Nav */}
+          <div className="iphone-footer">
+            <span className="footer-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21.75 9.75 12.53 3.04a.75.75 0 0 0-.9 0L2.25 9.75v10a.75.75 0 0 0 .75.75h6.5a.75.75 0 0 0 .75-.75v-5.5h3.5v5.5a.75.75 0 0 0 .75.75h6.5a.75.75 0 0 0 .75-.75v-10Z"></path>
+              </svg>
+            </span>
+            <span className="footer-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10.5 3a7.5 7.5 0 0 1 5.96 12.03l4.255 4.255a.75.75 0 1 1-1.06 1.06l-4.255-4.255A7.5 7.5 0 1 1 10.5 3Zm0 1.5a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z"></path>
+              </svg>
+            </span>
+            <span className="footer-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 4a.75.75 0 0 1 .75.75V11h6.25a.75.75 0 0 1 0 1.5H12.75v6.25a.75.75 0 0 1-1.5 0V12.5H5a.75.75 0 0 1 0-1.5h6.25V4.75A.75.75 0 0 1 12 4Z"></path>
+              </svg>
+            </span>
+            <span className="footer-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19.993 9.042a8.062 8.062 0 0 0-15.996.84L2.866 18H1.5a.5.5 0 0 0 0 1h17a.5.5 0 0 0 0-1h-1.334l-1.173-8.958zM16.5 19a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"></path>
+              </svg>
+            </span>
+            <span className="footer-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M1.998 4.499c0-.828.671-1.499 1.5-1.499h17c.828 0 1.5.671 1.5 1.499v2.422l-10 6.03-10-6.03V4.499zm0 4.422v10.579c0 .828.671 1.499 1.5 1.499h17c.828 0 1.5-.671 1.5-1.499V8.921l-10 6.03-10-6.03z"></path>
+              </svg>
+            </span>
+          </div>
+        </div>
 
         {/* Warnings / Actions */}
         {statusClass === 'completed' && (
