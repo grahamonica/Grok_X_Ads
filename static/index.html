@@ -1159,10 +1159,21 @@
       brandStyleLoader: document.getElementById('brandStyleLoader'),
       confirmBrandStyleBtn: document.getElementById('confirmBrandStyleBtn'),
       reRunBrandStyleBtn: document.getElementById('reRunBrandStyleBtn'),
+      productUrl: document.getElementById('productUrl'),
+      prompt: document.getElementById('prompt'),
+      editProductUrl: document.getElementById('editProductUrl'),
+      editGender: document.getElementById('editGender'),
+      editAgeRange: document.getElementById('editAgeRange'),
+      editLanguage: document.getElementById('editLanguage'),
+      editLocation: document.getElementById('editLocation'),
+      editAudience: document.getElementById('editAudience'),
+      colorPills: document.getElementById('colorPills'),
       colorPickers: document.getElementById('colorPickers'),
       addColorBtn: document.getElementById('addColorBtn'),
-      editMood: document.getElementById('editMood'),
-      editFontStyle: document.getElementById('editFontStyle'),
+      moodPills: document.getElementById('moodPills'),
+      fontStyleDisplay: document.getElementById('fontStyleDisplay'),
+      fontOptions: document.getElementById('fontOptions'),
+      editFontStyle: document.getElementById('fontSearch'),
       fontPreview: document.getElementById('fontPreview'),
       editSlogan: document.getElementById('editSlogan'),
       editProductDescription: document.getElementById('editProductDescription'),
@@ -1172,15 +1183,6 @@
       pinnedRecap: document.getElementById('pinnedRecap'),
       recapTimeline: document.getElementById('recapTimeline'),
       nextModule: document.getElementById('nextModule'),
-      // autofillBadge: document.getElementById('autofillBadge'),
-      productUrl: document.getElementById('productUrl'),
-      prompt: document.getElementById('prompt'),
-      editProductUrl: document.getElementById('editProductUrl'),
-      editGender: document.getElementById('editGender'),
-      editAgeRange: document.getElementById('editAgeRange'),
-      editLanguage: document.getElementById('editLanguage'),
-      editLocation: document.getElementById('editLocation'),
-      editAudience: document.getElementById('editAudience'),
       editorSection: document.getElementById('editorSection'),
       editorAdImage: document.getElementById('editorAdImage'),
       editorSloganOverlay: document.getElementById('editorSloganOverlay'),
@@ -1204,9 +1206,6 @@
       editorResetBtn: document.getElementById('editorResetBtn'),
       previewSection: document.getElementById('previewSection'),
       previewFeed: document.getElementById('previewFeed'),
-      addColorBtn: document.getElementById('addColorBtn'),
-      colorPickers: document.getElementById('colorPickers'),
-      editFontStyle: document.getElementById('fontSearch'),
       statusPill: document.getElementById('statusPill')
     };
 
@@ -1827,7 +1826,6 @@
         if (stepEl) {
           stepEl.classList.remove('active', 'completed');
         }
-      }
       }
 
       // Set current step as active
