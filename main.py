@@ -48,6 +48,17 @@ class AdImageResponse(BaseModel):
     metadata: Optional[dict] = None
 
 
+class BrandStyleRequest(BaseModel):
+    product_url: str
+
+
+class BrandStyleResponse(BaseModel):
+    colors: List[str]  # List of colors in hex format (e.g., "#FF5733", "#3498DB") for image generation
+    mood: str  # Mood/atmosphere for image generation (e.g., "professional", "playful", "luxury")
+    font_style: str  # Font style recommendation for HTML (e.g., "Modern Sans-Serif", "Elegant Serif")
+    slogan: Optional[str] = None  # Suggested slogan for the business
+
+
 async def call_grok_api(product_url: str, custom_prompt: str) -> AdDemographics:
     """Call Grok API to generate ad demographics."""
     if not GROK_API_KEY:
@@ -181,6 +192,116 @@ def build_image_prompt(request: AdImageRequest) -> str:
     )
 
 
+async def call_grok_brand_style_api(product_url: str) -> BrandStyleResponse:
+    """Call Grok API to analyze website and extract brand style elements."""
+    if not GROK_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="GROK_API_KEY environment variable is not set"
+        )
+    
+    system_message = """You are an expert in brand identity and visual design analysis. 
+Given a business website URL, browse and analyze the website to extract key brand style elements 
+that will be useful for creating advertisements. Return the information in JSON format with the 
+following exact fields:
+
+- colors: REQUIRED - An array of color strings in hex format (HTML color format). Extract the primary 
+  brand colors from the website. All colors MUST be provided as hex codes in the format "#RRGGBB" 
+  (e.g., "#FF5733", "#3498DB", "#000000", "#FFFFFF"). Do NOT use color names. 
+  Include 3-5 primary colors that represent the brand's visual identity. These will be used for 
+  image generation, so prioritize colors that appear prominently in the website's design, logo, 
+  or visual elements. Convert any color names you observe to their corresponding hex codes.
+
+- mood: REQUIRED - A single string describing the overall mood or atmosphere of the brand. 
+  This should be a concise descriptor that captures the emotional tone of the website. Examples:
+  * "professional", "playful", "luxury", "minimalist", "energetic", "calm", "sophisticated", 
+    "friendly", "bold", "elegant", "modern", "rustic", "tech-forward", "artisanal"
+  This will be used to guide image generation to match the brand's emotional tone.
+
+- font_style: REQUIRED - A single string describing the recommended font style for HTML use. 
+  This should be a descriptive font category or style that matches the website's typography. 
+  Examples:
+  * "Modern Sans-Serif" (for clean, contemporary sites)
+  * "Elegant Serif" (for sophisticated, traditional brands)
+  * "Bold Geometric" (for strong, impactful brands)
+  * "Playful Rounded" (for friendly, approachable brands)
+  * "Minimalist Sans" (for clean, simple designs)
+  * "Classic Serif" (for traditional, established brands)
+  * "Tech Monospace" (for technology-focused brands)
+  Base this on the typography you observe on the website.
+
+- slogan: OPTIONAL - A string containing a suggested slogan or tagline for the business. 
+  If the website already has a clear slogan or tagline, extract it. If not, create a compelling 
+  slogan that captures the essence of the brand based on the website content. If you cannot 
+  determine or create a suitable slogan, set this field to null.
+
+CRITICAL: 
+- Browse the website thoroughly to understand its visual identity, color scheme, typography, and messaging.
+- The colors array must contain 3-5 color strings that accurately represent the brand.
+- The mood should be a single descriptive word or short phrase.
+- The font_style should be a descriptive category that can guide HTML font selection.
+- Return ONLY valid JSON with these four fields, no additional text or markdown formatting."""
+
+    user_message = f"""Business Website URL: {product_url}
+
+Please browse this website and analyze its brand identity. Extract the colors, mood, font style, 
+and slogan that would be useful for creating advertisements. Return the analysis in JSON format."""
+
+    headers = {
+        "Authorization": f"Bearer {GROK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "model": "grok-4-0709",
+        "messages": [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message}
+        ],
+        "temperature": 0.7
+    }
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                GROK_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=60.0  # Longer timeout for website browsing
+            )
+            response.raise_for_status()
+            result = response.json()
+            
+            # Extract content from Grok response
+            content = result["choices"][0]["message"]["content"]
+            
+            # Parse JSON from response (handle if wrapped in markdown code blocks)
+            content = content.strip()
+            if content.startswith("```"):
+                # Remove markdown code block markers
+                lines = content.split("\n")
+                content = "\n".join(lines[1:-1]) if len(lines) > 2 else content
+            
+            style_data = json.loads(content)
+            return BrandStyleResponse(**style_data)
+            
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Grok API error: {e.response.text}"
+        )
+    except (KeyError, json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse Grok API response: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(e)}"
+        )
+
+
 async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
     """Call Grok image generation API to produce an ad image."""
     if not GROK_API_KEY:
@@ -258,6 +379,12 @@ async def generate_demographics(request: AdRequest):
 async def generate_ad_image(request: AdImageRequest):
     """Generate a single ad image tailored to the product and demographics."""
     return await call_grok_image_api(request)
+
+
+@app.post("/analyze-brand-style", response_model=BrandStyleResponse)
+async def analyze_brand_style(request: BrandStyleRequest):
+    """Analyze a business website to extract colors, mood, font style, and slogan for ad creation."""
+    return await call_grok_brand_style_api(request.product_url)
 
 
 @app.get("/")
