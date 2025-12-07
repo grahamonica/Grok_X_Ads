@@ -15,6 +15,7 @@ import ProductUrlNode from './nodes/ProductUrlNode';
 import DemographicsNode from './nodes/DemographicsNode';
 import BrandStyleNode from './nodes/BrandStyleNode';
 import GenerateNode from './nodes/GenerateNode';
+import ImageNode from './nodes/ImageNode';
 import PreviewNode from './nodes/PreviewNode';
 
 // Custom node types
@@ -23,6 +24,7 @@ const nodeTypes = {
   demographics: DemographicsNode,
   brandStyle: BrandStyleNode,
   generate: GenerateNode,
+  imageResult: ImageNode,
   preview: PreviewNode,
 };
 
@@ -67,25 +69,6 @@ const initialNodes = [
       confirmedDemographics: null,
     },
   },
-  {
-    id: 'generate',
-    type: 'generate',
-    position: { x: 1400, y: 100 },
-    data: { 
-      status: 'pending',
-      demographics: null,
-      brandStyle: null,
-    },
-  },
-  {
-    id: 'preview',
-    type: 'preview',
-    position: { x: 1850, y: 150 },
-    data: { 
-      status: 'pending',
-      imageUrl: null,
-    },
-  },
 ];
 
 const initialEdges = [
@@ -109,26 +92,6 @@ const initialEdges = [
     style: defaultEdgeStyle,
     markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' },
   },
-  {
-    id: 'e3-4',
-    source: 'brandStyle',
-    target: 'generate',
-    sourceHandle: 'output',
-    targetHandle: 'input',
-    animated: false,
-    style: defaultEdgeStyle,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' },
-  },
-  {
-    id: 'e4-5',
-    source: 'generate',
-    target: 'preview',
-    sourceHandle: 'output',
-    targetHandle: 'input',
-    animated: false,
-    style: defaultEdgeStyle,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' },
-  },
 ];
 
 export default function WorkflowCanvas() {
@@ -139,7 +102,6 @@ export default function WorkflowCanvas() {
   const [demographicsData, setDemographicsData] = useState(null);
   const [confirmedDemographics, setConfirmedDemographics] = useState(null);
   const [brandStyleData, setBrandStyleData] = useState(null);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState(null);
 
   // Update node statuses
   const updateNodeStatus = useCallback((nodeId, status) => {
@@ -236,60 +198,158 @@ export default function WorkflowCanvas() {
     // Update BrandStyle node to completed
     updateNodeStatus('brandStyle', 'completed');
     
-    // Update Generate node to active with data
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === 'generate') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              status: 'active',
-              demographics: confirmedDemographics,
-              brandStyle: data,
-            },
-          };
-        }
-        return node;
-      })
-    );
+    // Create 5 Generate nodes branching from BrandStyle
+    const newNodes = [];
+    const newEdges = [];
     
-    // Update edge
-    updateEdgeStatus('e4-5', true);
-  }, [setNodes, updateNodeStatus, updateEdgeStatus, confirmedDemographics]);
+    for (let i = 0; i < 5; i++) {
+      const nodeId = `generate-${i}`;
+      // Fan out vertically
+      const yPos = 100 + (i - 2) * 400; 
+      
+      newNodes.push({
+        id: nodeId,
+        type: 'generate',
+        position: { x: 1400, y: yPos },
+        data: {
+          status: 'active',
+          demographics: confirmedDemographics,
+          brandStyle: data,
+          index: i
+        },
+      });
+      
+      newEdges.push({
+        id: `e-brand-gen-${i}`,
+        source: 'brandStyle',
+        target: nodeId,
+        sourceHandle: 'output',
+        targetHandle: 'input',
+        animated: true,
+        style: activeEdgeStyle,
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#8b5cf6' },
+      });
+    }
 
-  // Handle image generation
-  const handleImageGenerated = useCallback((data) => {
-    setGeneratedImageUrl(data.imageUrl);
-  }, []);
+    setNodes((nds) => {
+      // Remove original generate node and any existing generate nodes
+      const filtered = nds.filter(n => n.id !== 'generate' && !n.id.startsWith('generate-'));
+      return [...filtered, ...newNodes];
+    });
 
-  // Handle proceed to preview
-  const handleProceedToPreview = useCallback(() => {
+    setEdges((eds) => {
+      // Remove edges connected to original generate node
+      const filtered = eds.filter(e => e.target !== 'generate' && !e.target.startsWith('generate-'));
+      return [...filtered, ...newEdges];
+    });
+  }, [setNodes, setEdges, updateNodeStatus, confirmedDemographics]);
+
+  // Handle image generation from a single GenerateNode
+  const handleImageGenerated = useCallback((nodeId, data) => {
+    // Get the first image (since each GenerateNode now generates 1 image)
+    const image = data.images?.[0] || { image_url: data.image_url };
+    
     // Update Generate node to completed
-    updateNodeStatus('generate', 'completed');
-    
-    // Update Preview node to active
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === 'preview') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              status: 'active',
-              imageUrl: generatedImageUrl,
-            },
-          };
-        }
-        return node;
-      })
-    );
-  }, [setNodes, updateNodeStatus, generatedImageUrl]);
+    updateNodeStatus(nodeId, 'completed');
+
+    // Create ImageResult node for this generated image
+    if (image.image_url) {
+      setNodes((nds) => {
+        // Check if image node already exists for this generate node
+        const existingImageNode = nds.find(n => n.id === `image-${nodeId}`);
+        if (existingImageNode) return nds;
+
+        const sourceNode = nds.find(n => n.id === nodeId);
+        const yPos = sourceNode ? sourceNode.position.y : 0;
+        
+        const newNode = {
+          id: `image-${nodeId}`,
+          type: 'imageResult',
+          position: { x: 1850, y: yPos },
+          data: {
+            status: 'active',
+            imageUrl: image.image_url,
+            textPlacement: image.text_placement || data.text_placement,
+          },
+        };
+        return [...nds, newNode];
+      });
+
+      setEdges((eds) => {
+        // Check if edge already exists
+        if (eds.find(e => e.target === `image-${nodeId}`)) return eds;
+        
+        return [...eds, {
+          id: `e-${nodeId}-img`,
+          source: nodeId,
+          target: `image-${nodeId}`,
+          sourceHandle: 'output',
+          targetHandle: 'input',
+          animated: true,
+          style: activeEdgeStyle,
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#8b5cf6' },
+        }];
+      });
+    }
+  }, [setNodes, setEdges, updateNodeStatus]);
+
+  // Handle individual image preview
+  const handlePreviewImage = useCallback((nodeId, data) => {
+     // Create a PreviewNode connected to this ImageNode
+     const previewNodeId = `preview-${nodeId}`;
+     
+     setNodes((nds) => {
+       // Check if exists
+       if (nds.find(n => n.id === previewNodeId)) return nds;
+
+       const sourceNode = nds.find(n => n.id === nodeId);
+       const yPos = sourceNode ? sourceNode.position.y : 0;
+
+       const newNode = {
+         id: previewNodeId,
+         type: 'preview',
+         position: { x: 2300, y: yPos },
+         data: {
+           status: 'active',
+           imageUrl: data.imageUrl,
+           textPlacement: data.textPlacement
+         }
+       };
+       return [...nds, newNode];
+     });
+
+     setEdges((eds) => {
+       if (eds.find(e => e.target === previewNodeId)) return eds;
+       
+       return [...eds, {
+         id: `e-${nodeId}-prev`,
+         source: nodeId,
+         target: previewNodeId,
+         sourceHandle: 'output',
+         targetHandle: 'input',
+         animated: true,
+         style: activeEdgeStyle,
+         markerEnd: { type: MarkerType.ArrowClosed, color: '#8b5cf6' },
+       }];
+     });
+
+     // Mark image node as completed
+     updateNodeStatus(nodeId, 'completed');
+
+  }, [setNodes, setEdges, updateNodeStatus]);
 
   // Handle workflow complete
   const handleWorkflowComplete = useCallback(() => {
-    updateNodeStatus('preview', 'completed');
-  }, [updateNodeStatus]);
+    // Mark all preview nodes as completed
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id.startsWith('preview-')) {
+          return { ...node, data: { ...node.data, status: 'completed' } };
+        }
+        return node;
+      })
+    );
+  }, [setNodes]);
 
   // Memoized nodes with callbacks
   const nodesWithCallbacks = useMemo(() => {
@@ -305,11 +365,13 @@ export default function WorkflowCanvas() {
       if (node.id === 'brandStyle') {
         callbacks.onBrandStyleConfirmed = handleBrandStyleConfirmed;
       }
-      if (node.id === 'generate') {
-        callbacks.onImageGenerated = handleImageGenerated;
-        callbacks.onProceedToPreview = handleProceedToPreview;
+      if (node.id === 'generate' || node.id.startsWith('generate-')) {
+        callbacks.onImageGenerated = (data) => handleImageGenerated(node.id, data);
       }
-      if (node.id === 'preview') {
+      if (node.id.startsWith('image-')) {
+        callbacks.onPreview = () => handlePreviewImage(node.id, node.data);
+      }
+      if (node.id === 'preview' || node.id.startsWith('preview-')) {
         callbacks.onComplete = handleWorkflowComplete;
       }
       
@@ -324,8 +386,10 @@ export default function WorkflowCanvas() {
     handleDemographicsConfirmed,
     handleBrandStyleConfirmed,
     handleImageGenerated,
-    handleProceedToPreview,
+    handlePreviewImage,
     handleWorkflowComplete,
+    updateNodeStatus,
+    updateEdgeStatus,
   ]);
 
   const onConnect = useCallback(

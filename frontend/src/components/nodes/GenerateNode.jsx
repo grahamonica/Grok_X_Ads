@@ -4,7 +4,7 @@ import { Handle, Position } from '@xyflow/react';
 const GenerateNode = memo(({ data, selected }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [generatedImage, setGeneratedImage] = useState(null);
+  const [generatedImages, setGeneratedImages] = useState([]);
   const [promptUsed, setPromptUsed] = useState('');
 
   const handleGenerate = useCallback(async () => {
@@ -44,6 +44,7 @@ const GenerateNode = memo(({ data, selected }) => {
         colors: brandStyle.colors,
         mood: brandStyle.mood,
         product_description: brandStyle.productDescription,
+        num_images: 1, // Each GenerateNode generates only 1 image
       };
 
       const response = await fetch('/generate-ad-image', {
@@ -57,12 +58,17 @@ const GenerateNode = memo(({ data, selected }) => {
       }
 
       const result = await response.json();
-      setGeneratedImage(result.image_url);
+      const images = result.images || [{ image_url: result.image_url }];
+      // Since we're generating 1 image, just take the first one
+      const singleImage = images[0] || { image_url: result.image_url };
+      setGeneratedImages([singleImage]);
       setPromptUsed(result.prompt_used || '');
 
       if (data.onImageGenerated) {
         data.onImageGenerated({
-          imageUrl: result.image_url,
+          images: [singleImage],
+          image_url: singleImage.image_url,
+          text_placement: singleImage.text_placement,
           promptUsed: result.prompt_used,
         });
       }
@@ -124,19 +130,8 @@ const GenerateNode = memo(({ data, selected }) => {
           </div>
         )}
 
-        {/* Image Preview */}
-        <div className="image-preview">
-          {generatedImage ? (
-            <img src={`/proxy-image?image_url=${encodeURIComponent(generatedImage)}`} alt="Generated Ad" />
-          ) : (
-            <div className="image-preview-placeholder">
-              {isDisabled 
-                ? 'Complete previous steps to generate' 
-                : 'Click Generate to create your ad image'}
-            </div>
-          )}
-        </div>
-
+        {/* Image Preview - Removed, now shown in subsequent nodes */}
+        
         {/* Prompt Used */}
         {promptUsed && (
           <div style={{ 
@@ -146,7 +141,8 @@ const GenerateNode = memo(({ data, selected }) => {
             fontSize: '11px',
             color: 'var(--muted)',
             maxHeight: '60px',
-            overflow: 'auto'
+            overflow: 'auto',
+            marginBottom: '10px'
           }}>
             <strong>Prompt:</strong> {promptUsed}
           </div>
@@ -165,17 +161,18 @@ const GenerateNode = memo(({ data, selected }) => {
           onClick={handleGenerate}
           disabled={isDisabled || isLoading}
         >
-          {isLoading ? 'Generating...' : generatedImage ? 'Regenerate Image' : 'Generate Ad Image'}
+          {isLoading ? 'Generating...' : generatedImages.length > 0 ? 'Regenerate Image' : 'Generate Ad Image'}
         </button>
 
-        {generatedImage && (
-          <button
-            className="node-button secondary"
-            onClick={() => data.onProceedToPreview && data.onProceedToPreview()}
-            style={{ marginTop: '8px' }}
-          >
-            Proceed to Preview →
-          </button>
+        {generatedImages.length > 0 && (
+          <div style={{ 
+            marginTop: '10px', 
+            fontSize: '12px', 
+            color: '#10b981', 
+            textAlign: 'center' 
+          }}>
+            ✓ Image generated. See result node.
+          </div>
         )}
       </div>
 
