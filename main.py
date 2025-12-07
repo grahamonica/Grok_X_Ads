@@ -369,7 +369,7 @@ async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
     }
 
     payload = {
-        "model": "grok-2-image",
+        "model": "grok-imagine-v0p9",
         "prompt": prompt_text,
         "n": 1
     }
