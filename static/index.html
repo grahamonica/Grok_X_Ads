@@ -1619,6 +1619,8 @@
 
         setBrandStyleFields(result);
         elements.brandStylePanel.classList.remove('hidden');
+        // elements.brandStyleBadge.textContent = 'autofill by Grok';
+        updateProgressIndicator(2); // Stay on step 2 while analyzing
         elements.brandStyleBadge.textContent = 'autofill by Grok';
 
         console.log(`Brand style API call completed in ${elapsed}s`);
@@ -1689,6 +1691,8 @@
 
         setEditFields(result, prompt);
         elements.editPanel.classList.remove('hidden');
+        // elements.autofillBadge.textContent = 'autofill by Grok';
+        updateProgressIndicator(2); // Move to step 2
         elements.autofillBadge.textContent = 'autofill by Grok';
         
         console.log(`API call completed in ${elapsed}s`);
