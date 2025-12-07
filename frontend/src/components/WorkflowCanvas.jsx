@@ -102,6 +102,7 @@ export default function WorkflowCanvas() {
   const [demographicsData, setDemographicsData] = useState(null);
   const [confirmedDemographics, setConfirmedDemographics] = useState(null);
   const [brandStyleData, setBrandStyleData] = useState(null);
+  const [isGeneratingImages, setIsGeneratingImages] = useState(false);
 
   // Update node statuses
   const updateNodeStatus = useCallback((nodeId, status) => {
@@ -197,9 +198,11 @@ export default function WorkflowCanvas() {
     
     // Update BrandStyle node to active (will be completed after images are generated)
     updateNodeStatus('brandStyle', 'active');
+    setIsGeneratingImages(true);
     
     if (!confirmedDemographics) {
       console.error('Missing demographics data');
+      setIsGeneratingImages(false);
       return;
     }
 
@@ -248,6 +251,7 @@ export default function WorkflowCanvas() {
       
       // Update BrandStyle node to completed
       updateNodeStatus('brandStyle', 'completed');
+      setIsGeneratingImages(false);
       
       // Create 3 Image nodes directly from the response
       const newNodes = [];
@@ -305,6 +309,7 @@ export default function WorkflowCanvas() {
       console.error('Error generating images:', error);
       // Revert brand style status on error
       updateNodeStatus('brandStyle', 'active');
+      setIsGeneratingImages(false);
     }
   }, [setNodes, setEdges, updateNodeStatus, confirmedDemographics]);
 
@@ -380,6 +385,7 @@ export default function WorkflowCanvas() {
       }
       if (node.id === 'brandStyle') {
         callbacks.onBrandStyleConfirmed = handleBrandStyleConfirmed;
+        callbacks.isGeneratingImages = isGeneratingImages;
       }
       if (node.id.startsWith('image-')) {
         callbacks.onPreview = () => handlePreviewImage(node.id, node.data);

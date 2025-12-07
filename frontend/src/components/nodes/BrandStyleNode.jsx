@@ -122,7 +122,7 @@ const BrandStyleNode = memo(({ data, selected }) => {
 
       {/* Content */}
       <div className="node-content">
-        {isAutoFilling && <div className="node-loader" />}
+        {(isAutoFilling || data.isGeneratingImages) && <div className="node-loader" />}
 
         {/* Colors */}
         <div className="node-field">
@@ -231,9 +231,13 @@ const BrandStyleNode = memo(({ data, selected }) => {
         <button
           className="node-button"
           onClick={handleConfirm}
-          disabled={isDisabled || colors.length === 0 || moods.length === 0 || !fontStyle || !productDescription}
+          disabled={isDisabled || colors.length === 0 || moods.length === 0 || !fontStyle || !productDescription || data.isGeneratingImages}
         >
-          {statusClass === 'completed' ? 'Brand Style Confirmed' : 'Confirm Brand Style'}
+          {data.isGeneratingImages 
+            ? 'Generating Images...' 
+            : statusClass === 'completed' 
+              ? 'Brand Style Confirmed' 
+              : 'Confirm Brand Style'}
         </button>
       </div>
 
