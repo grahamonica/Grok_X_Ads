@@ -614,7 +614,6 @@
     <section id="pinnedRecap" class="panel hidden">
       <div class="panel-header">
         <div class="panel-title">Pinned target audience</div>
-        <span class="pill monospace" id="recapBadge">locked</span>
       </div>
       <div class="timeline" id="recapTimeline"></div>
     </section>
@@ -622,7 +621,6 @@
     <section class="panel">
       <div class="panel-header">
         <div class="panel-title">Step 1 · Get demographics</div>
-        <span class="pill"></span>
       </div>
       <form id="demographicForm" novalidate>
         <div>
@@ -645,7 +643,6 @@
     <section id="editPanel" class="panel hidden">
       <div class="panel-header">
         <div class="panel-title">Step 2 · Review & edit demographics</div>
-        <span class="pill" id="autofillBadge">autofill</span>
       </div>
       <div class="stack">
         <div class="field-row">
@@ -694,7 +691,6 @@
     <section id="brandStylePanel" class="panel hidden">
       <div class="panel-header">
         <div class="panel-title">Step 3 · Get brand style</div>
-        <span class="pill" id="brandStyleBadge">analyzing</span>
       </div>
       <div class="stack">
         <div class="field-row">
@@ -737,7 +733,6 @@
     <section id="nextModule" class="panel next-module hidden">
       <div class="panel-header">
         <div class="panel-title">Step 4 · Generate ad image</div>
-        <span class="pill">ready</span>
       </div>
       <div class="timeline">
         <div class="tile">
@@ -755,7 +750,6 @@
     <section id="editorSection" class="panel hidden">
       <div class="panel-header">
         <div class="panel-title">Step 5 · Edit ad image</div>
-        <span class="pill">editor</span>
       </div>
       <div class="editor-wrapper">
         <div class="canvas-container">
@@ -847,7 +841,7 @@
       editAlert: document.getElementById('editAlert'),
       confirmBtn: document.getElementById('confirmBtn'),
       brandStylePanel: document.getElementById('brandStylePanel'),
-      brandStyleBadge: document.getElementById('brandStyleBadge'),
+      // brandStyleBadge: document.getElementById('brandStyleBadge'),
       brandStyleAlert: document.getElementById('brandStyleAlert'),
       brandStyleLoader: document.getElementById('brandStyleLoader'),
       confirmBrandStyleBtn: document.getElementById('confirmBrandStyleBtn'),
@@ -864,7 +858,7 @@
       pinnedRecap: document.getElementById('pinnedRecap'),
       recapTimeline: document.getElementById('recapTimeline'),
       nextModule: document.getElementById('nextModule'),
-      autofillBadge: document.getElementById('autofillBadge'),
+      // autofillBadge: document.getElementById('autofillBadge'),
       productUrl: document.getElementById('productUrl'),
       prompt: document.getElementById('prompt'),
       editProductUrl: document.getElementById('editProductUrl'),
@@ -1104,7 +1098,7 @@
     const setBrandStyleLoading = (isLoading) => {
       elements.confirmBrandStyleBtn.disabled = isLoading;
       elements.brandStyleLoader.classList.toggle('hidden', !isLoading);
-      elements.brandStyleBadge.textContent = isLoading ? 'analyzing' : 'autofill';
+      // elements.brandStyleBadge.textContent = isLoading ? 'analyzing' : 'autofill';
     };
 
     // Optimized fetch with abort controller and keepalive
@@ -1146,7 +1140,7 @@
 
         setBrandStyleFields(result);
         elements.brandStylePanel.classList.remove('hidden');
-        elements.brandStyleBadge.textContent = 'autofill by Grok';
+        // elements.brandStyleBadge.textContent = 'autofill by Grok';
         updateProgressIndicator(2); // Stay on step 2 while analyzing
 
         console.log(`Brand style API call completed in ${elapsed}s`);
@@ -1208,7 +1202,7 @@
         
         setEditFields(result, prompt);
         elements.editPanel.classList.remove('hidden');
-        elements.autofillBadge.textContent = 'autofill by Grok';
+        // elements.autofillBadge.textContent = 'autofill by Grok';
         updateProgressIndicator(2); // Move to step 2
         
         console.log(`API call completed in ${elapsed}s`);
