@@ -30,7 +30,7 @@ const nodeTypes = {
 
 // Edge style with gradient
 const defaultEdgeStyle = {
-  stroke: '#4b5563',
+  stroke: '#cfd0d2',
   strokeWidth: 2,
 };
 
@@ -80,7 +80,7 @@ const initialEdges = [
     targetHandle: 'input',
     animated: true,
     style: activeEdgeStyle,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#8b5cf6' },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#ffffff' },
   },
   {
     id: 'e2-3',
@@ -90,7 +90,27 @@ const initialEdges = [
     targetHandle: 'input',
     animated: false,
     style: defaultEdgeStyle,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#cfd0d2' },
+  },
+  {
+    id: 'e3-4',
+    source: 'brandStyle',
+    target: 'generate',
+    sourceHandle: 'output',
+    targetHandle: 'input',
+    animated: false,
+    style: defaultEdgeStyle,
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#cfd0d2' },
+  },
+  {
+    id: 'e4-5',
+    source: 'generate',
+    target: 'preview',
+    sourceHandle: 'output',
+    targetHandle: 'input',
+    animated: false,
+    style: defaultEdgeStyle,
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#cfd0d2' },
   },
 ];
 
@@ -398,13 +418,20 @@ export default function WorkflowCanvas() {
   );
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div className="workflow-app" style={{ width: '100vw', height: '100vh' }}>
+      <div className="workflow-topbar">
+        <div className="xai-mark">
+          <span className="xai-text">xAI</span>
+        </div>
+        <div className="workflow-topbar-title">Ad Workflow</div>
+      </div>
+      <div className="flow-shell">
       {/* SVG Gradient Definitions */}
       <svg style={{ position: 'absolute', width: 0, height: 0 }}>
         <defs>
           <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#8b5cf6" />
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#ffffff" />
           </linearGradient>
         </defs>
       </svg>
@@ -427,7 +454,7 @@ export default function WorkflowCanvas() {
           variant="dots" 
           gap={20} 
           size={1} 
-          color="rgba(99, 102, 241, 0.15)" 
+          color="rgba(255, 255, 255, 0.12)" 
         />
         <Controls 
           position="bottom-left"
@@ -438,16 +465,17 @@ export default function WorkflowCanvas() {
           nodeColor={(node) => {
             switch (node.data?.status) {
               case 'active':
-                return '#6366f1';
+                return '#ffffff';
               case 'completed':
-                return '#10b981';
+                return '#dcdcdc';
               default:
-                return '#4b5563';
+                return '#cfd0d2';
             }
           }}
-          maskColor="rgba(10, 10, 15, 0.8)"
+          maskColor="rgba(0, 0, 0, 0.82)"
         />
       </ReactFlow>
+      </div>
     </div>
   );
 }

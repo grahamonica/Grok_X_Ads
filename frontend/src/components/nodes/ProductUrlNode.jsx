@@ -55,7 +55,6 @@ const ProductUrlNode = memo(({ data, selected }) => {
 
       {/* Header */}
       <div className="node-header">
-        <div className="node-header-icon">🔗</div>
         <div className="node-header-title">Product URL</div>
         <div className="node-header-info">ⓘ</div>
         <div className="node-info-tooltip">
@@ -110,7 +109,7 @@ const ProductUrlNode = memo(({ data, selected }) => {
         type="source"
         position={Position.Right}
         id="output"
-        style={{ background: '#6366f1' }}
+        style={{ background: '#ffffff' }}
       />
     </div>
   );
