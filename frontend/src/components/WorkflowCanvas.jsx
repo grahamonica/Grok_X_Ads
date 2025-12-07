@@ -228,7 +228,7 @@ export default function WorkflowCanvas() {
       colors: data.colors,
       mood: data.mood,
       product_description: data.productDescription,
-      num_images: 5,
+      num_images: 3,
     };
 
     try {
@@ -249,7 +249,7 @@ export default function WorkflowCanvas() {
       // Update BrandStyle node to completed
       updateNodeStatus('brandStyle', 'completed');
       
-      // Create 5 Image nodes directly from the response
+      // Create 3 Image nodes directly from the response
       const newNodes = [];
       const newEdges = [];
       
