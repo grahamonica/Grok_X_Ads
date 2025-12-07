@@ -839,8 +839,32 @@
   <script>
     // Utility functions
     const startRotatingMessages = (messages, interval = 2000, delay = 2000) => {
-      // Rotating messages disabled - status badges removed for cleaner UI
-      return () => {}; // Return empty cleanup function
+      let messageIndex = 0;
+      const statusPill = document.querySelector('.panel-title + span');
+
+      const rotateMessage = () => {
+        if (statusPill && messages[messageIndex]) {
+          statusPill.textContent = messages[messageIndex];
+          messageIndex = (messageIndex + 1) % messages.length;
+        }
+      };
+
+      // Start after delay
+      const delayId = setTimeout(() => {
+        rotateMessage();
+        // Set up interval
+        const intervalId = setInterval(rotateMessage, interval);
+        // Store interval ID for cleanup
+        statusPill._intervalId = intervalId;
+      }, delay);
+
+      // Return function to stop the rotation
+      return () => {
+        clearTimeout(delayId);
+        if (statusPill._intervalId) {
+          clearInterval(statusPill._intervalId);
+        }
+      };
     };
 
     // Cache DOM elements for performance
@@ -1360,7 +1384,23 @@
 
         // Add event listener to the edit button
         document.getElementById('editImageBtn').addEventListener('click', () => {
-          initializeEditor(result.image_url, window.brandStyleData?.slogan || '', '', window.brandStyleData?.colors || []);
+          const slogan = window.brandStyleData?.slogan || '';
+          const companyName = window.brandStyleData?.company_name || '';
+          const colors = window.brandStyleData?.colors || [];
+          const fontStyle = window.brandStyleData?.fontStyle || 'Modern Sans-Serif';
+          const textPlacement = result.text_placement ? encodeURIComponent(JSON.stringify(result.text_placement)) : '';
+
+          // Navigate to editor page with parameters
+          const params = new URLSearchParams({
+            image: result.image_url,
+            slogan: slogan,
+            companyName: companyName,
+            colors: colors.join(','),
+            fontStyle: fontStyle,
+            ...(textPlacement && { textPlacement: textPlacement })
+          });
+
+          window.location.href = `/editor?${params.toString()}`;
         });
 
       } catch (error) {
