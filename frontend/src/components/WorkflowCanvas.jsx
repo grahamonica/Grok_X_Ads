@@ -92,26 +92,6 @@ const initialEdges = [
     style: defaultEdgeStyle,
     markerEnd: { type: MarkerType.ArrowClosed, color: '#cfd0d2' },
   },
-  {
-    id: 'e3-4',
-    source: 'brandStyle',
-    target: 'generate',
-    sourceHandle: 'output',
-    targetHandle: 'input',
-    animated: false,
-    style: defaultEdgeStyle,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#cfd0d2' },
-  },
-  {
-    id: 'e4-5',
-    source: 'generate',
-    target: 'preview',
-    sourceHandle: 'output',
-    targetHandle: 'input',
-    animated: false,
-    style: defaultEdgeStyle,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#cfd0d2' },
-  },
 ];
 
 export default function WorkflowCanvas() {
@@ -212,106 +192,122 @@ export default function WorkflowCanvas() {
   }, [setNodes, updateNodeStatus, updateEdgeStatus]);
 
   // Handle brand style confirmation
-  const handleBrandStyleConfirmed = useCallback((data) => {
+  const handleBrandStyleConfirmed = useCallback(async (data) => {
     setBrandStyleData(data);
     
-    // Update BrandStyle node to completed
-    updateNodeStatus('brandStyle', 'completed');
+    // Update BrandStyle node to active (will be completed after images are generated)
+    updateNodeStatus('brandStyle', 'active');
     
-    // Create 5 Generate nodes branching from BrandStyle
-    const newNodes = [];
-    const newEdges = [];
-    
-    for (let i = 0; i < 5; i++) {
-      const nodeId = `generate-${i}`;
-      // Fan out vertically
-      const yPos = 100 + (i - 2) * 400; 
-      
-      newNodes.push({
-        id: nodeId,
-        type: 'generate',
-        position: { x: 1400, y: yPos },
-        data: {
-          status: 'active',
-          demographics: confirmedDemographics,
-          brandStyle: data,
-          index: i
-        },
-      });
-      
-      newEdges.push({
-        id: `e-brand-gen-${i}`,
-        source: 'brandStyle',
-        target: nodeId,
-        sourceHandle: 'output',
-        targetHandle: 'input',
-        animated: true,
-        style: activeEdgeStyle,
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#8b5cf6' },
-      });
+    if (!confirmedDemographics) {
+      console.error('Missing demographics data');
+      return;
     }
 
-    setNodes((nds) => {
-      // Remove original generate node and any existing generate nodes
-      const filtered = nds.filter(n => n.id !== 'generate' && !n.id.startsWith('generate-'));
-      return [...filtered, ...newNodes];
-    });
+    // Convert age_range object to string format
+    let ageRangeStr = null;
+    if (confirmedDemographics.age_range) {
+      const { min, max } = confirmedDemographics.age_range;
+      if (min === null && max === null) {
+        ageRangeStr = 'All';
+      } else if (min === null) {
+        ageRangeStr = `${max}-`;
+      } else if (max === null) {
+        ageRangeStr = `${min}+`;
+      } else {
+        ageRangeStr = `${min}-${max}`;
+      }
+    }
 
-    setEdges((eds) => {
-      // Remove edges connected to original generate node
-      const filtered = eds.filter(e => e.target !== 'generate' && !e.target.startsWith('generate-'));
-      return [...filtered, ...newEdges];
-    });
-  }, [setNodes, setEdges, updateNodeStatus, confirmedDemographics]);
+    // Prepare request data
+    const requestData = {
+      product_url: confirmedDemographics.product_url,
+      gender: confirmedDemographics.gender,
+      age_range: ageRangeStr,
+      language: confirmedDemographics.language?.join(', ') || null,
+      location: confirmedDemographics.location?.join(', ') || null,
+      colors: data.colors,
+      mood: data.mood,
+      product_description: data.productDescription,
+      num_images: 5,
+    };
 
-  // Handle image generation from a single GenerateNode
-  const handleImageGenerated = useCallback((nodeId, data) => {
-    // Get the first image (since each GenerateNode now generates 1 image)
-    const image = data.images?.[0] || { image_url: data.image_url };
-    
-    // Update Generate node to completed
-    updateNodeStatus(nodeId, 'completed');
+    try {
+      // Call the image generation API directly
+      const response = await fetch('/generate-ad-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData),
+      });
 
-    // Create ImageResult node for this generated image
-    if (image.image_url) {
-      setNodes((nds) => {
-        // Check if image node already exists for this generate node
-        const existingImageNode = nds.find(n => n.id === `image-${nodeId}`);
-        if (existingImageNode) return nds;
+      if (!response.ok) {
+        throw new Error('Failed to generate ad images');
+      }
 
-        const sourceNode = nds.find(n => n.id === nodeId);
-        const yPos = sourceNode ? sourceNode.position.y : 0;
+      const result = await response.json();
+      const images = result.images || [{ image_url: result.image_url }];
+      
+      // Update BrandStyle node to completed
+      updateNodeStatus('brandStyle', 'completed');
+      
+      // Create 5 Image nodes directly from the response
+      const newNodes = [];
+      const newEdges = [];
+      
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        const nodeId = `image-${i}`;
+        // Fan out vertically
+        const yPos = 100 + (i - 2) * 400; 
         
-        const newNode = {
-          id: `image-${nodeId}`,
+        newNodes.push({
+          id: nodeId,
           type: 'imageResult',
-          position: { x: 1850, y: yPos },
+          position: { x: 1400, y: yPos },
           data: {
             status: 'active',
             imageUrl: image.image_url,
-            textPlacement: image.text_placement || data.text_placement,
+            textPlacement: image.text_placement,
           },
-        };
-        return [...nds, newNode];
-      });
-
-      setEdges((eds) => {
-        // Check if edge already exists
-        if (eds.find(e => e.target === `image-${nodeId}`)) return eds;
+        });
         
-        return [...eds, {
-          id: `e-${nodeId}-img`,
-          source: nodeId,
-          target: `image-${nodeId}`,
+        newEdges.push({
+          id: `e-brand-img-${i}`,
+          source: 'brandStyle',
+          target: nodeId,
           sourceHandle: 'output',
           targetHandle: 'input',
           animated: true,
           style: activeEdgeStyle,
           markerEnd: { type: MarkerType.ArrowClosed, color: '#8b5cf6' },
-        }];
+        });
+      }
+
+      setNodes((nds) => {
+        // Remove original generate node and any existing generate/image nodes
+        const filtered = nds.filter(n => 
+          n.id !== 'generate' && 
+          !n.id.startsWith('generate-') && 
+          !n.id.startsWith('image-')
+        );
+        return [...filtered, ...newNodes];
       });
+
+      setEdges((eds) => {
+        // Remove edges connected to original generate node
+        const filtered = eds.filter(e => 
+          e.target !== 'generate' && 
+          !e.target.startsWith('generate-') &&
+          !e.target.startsWith('image-')
+        );
+        return [...filtered, ...newEdges];
+      });
+    } catch (error) {
+      console.error('Error generating images:', error);
+      // Revert brand style status on error
+      updateNodeStatus('brandStyle', 'active');
     }
-  }, [setNodes, setEdges, updateNodeStatus]);
+  }, [setNodes, setEdges, updateNodeStatus, confirmedDemographics]);
+
 
   // Handle individual image preview
   const handlePreviewImage = useCallback((nodeId, data) => {
@@ -385,9 +381,6 @@ export default function WorkflowCanvas() {
       if (node.id === 'brandStyle') {
         callbacks.onBrandStyleConfirmed = handleBrandStyleConfirmed;
       }
-      if (node.id === 'generate' || node.id.startsWith('generate-')) {
-        callbacks.onImageGenerated = (data) => handleImageGenerated(node.id, data);
-      }
       if (node.id.startsWith('image-')) {
         callbacks.onPreview = () => handlePreviewImage(node.id, node.data);
       }
@@ -405,7 +398,6 @@ export default function WorkflowCanvas() {
     handleDemographicsReceived,
     handleDemographicsConfirmed,
     handleBrandStyleConfirmed,
-    handleImageGenerated,
     handlePreviewImage,
     handleWorkflowComplete,
     updateNodeStatus,

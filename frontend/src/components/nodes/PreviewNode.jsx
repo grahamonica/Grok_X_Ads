@@ -89,8 +89,8 @@ const PreviewNode = memo(({ data, selected }) => {
       setError(null);
       try {
         const origin = window.location.origin;
-        const primaryUrl = `${origin}/data/foodie_homechef.jsonl`;
-        const fallbackUrl = `${origin}/app/data/foodie_homechef.jsonl`
+        const primaryUrl = `${origin}/data/yc_builder.jsonl`;
+        const fallbackUrl = `${origin}/app/data/yc_builder.jsonl`
 
         let res = await fetch(primaryUrl);
         if (!res.ok) {
