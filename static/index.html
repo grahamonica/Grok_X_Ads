@@ -219,12 +219,46 @@
       color: var(--muted);
     }
 
+    .status-pill {
+      margin-left: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--ghost);
+      color: var(--ink);
+      font-size: 12px;
+      min-width: 120px;
+      text-align: center;
+    }
+
     .pill {
       font-size: 12px;
       padding: 6px 10px;
       border: 1px solid var(--border);
       border-radius: 999px;
       color: var(--ink);
+      background: var(--ghost);
+    }
+
+    .color-picker-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .color-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .color-picker-row input[type="color"] {
+      width: 48px;
+      height: 36px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
       background: var(--ghost);
     }
 
@@ -935,6 +969,7 @@
     <section class="panel">
       <div class="panel-header">
         <div class="panel-title">Step 1 · Get demographics</div>
+        <span id="statusPill" class="status-pill" aria-live="polite"></span>
       </div>
       <form id="demographicForm" novalidate>
         <div>
@@ -1013,6 +1048,10 @@
             <!-- Color pills will be dynamically added here -->
           </div>
           <input type="text" id="colorSearch" class="pill-search" placeholder="Search or add color (hex code)">
+          <div class="actions" style="margin-top: 8px;">
+            <button type="button" class="ghost-btn" id="addColorBtn">Add custom color picker</button>
+          </div>
+          <div id="colorPickers" class="color-picker-list hidden" aria-live="polite"></div>
         </div>
         <div>
           <label>Brand mood <span class="required"></span></label>
@@ -1258,7 +1297,11 @@
       editorDownloadBtn: document.getElementById('editorDownloadBtn'),
       editorResetBtn: document.getElementById('editorResetBtn'),
       previewSection: document.getElementById('previewSection'),
-      previewFeed: document.getElementById('previewFeed')
+      previewFeed: document.getElementById('previewFeed'),
+      addColorBtn: document.getElementById('addColorBtn'),
+      colorPickers: document.getElementById('colorPickers'),
+      editFontStyle: document.getElementById('fontSearch'),
+      statusPill: document.getElementById('statusPill')
     };
 
     const ageRangeOptions = [
@@ -1304,7 +1347,7 @@
     };
 
     // Preview (iPhone feed) constants/state
-    const PREVIEW_DATA_URL = 'iphone/foodie_homechef.jsonl';
+    const PREVIEW_DATA_URL = '/static/iphone/foodie_homechef.jsonl';
     const PREVIEW_BATCH_SIZE = 10;
     const PREVIEW_AD_INTERVAL = 5;
     const previewState = {
@@ -1541,10 +1584,59 @@
       // elements.brandStyleBadge.textContent = isLoading ? 'analyzing' : 'autofill';
     };
 
+    const createColorPicker = (value = '#ffffff') => {
+      const row = document.createElement('div');
+      row.className = 'color-picker-row';
+
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.value = value;
+
+      const hexInput = document.createElement('input');
+      hexInput.type = 'text';
+      hexInput.placeholder = '#FFFFFF';
+      hexInput.value = value;
+      hexInput.className = 'pill-search';
+      hexInput.style.flex = '1';
+
+      const syncValue = (val) => {
+        if (!/^#([0-9a-fA-F]{3}){1,2}$/.test(val)) return;
+        picker.value = val;
+        hexInput.value = val.toUpperCase();
+      };
+
+      picker.addEventListener('input', (e) => syncValue(e.target.value));
+      hexInput.addEventListener('input', (e) => syncValue(e.target.value.trim()));
+
+      row.appendChild(picker);
+      row.appendChild(hexInput);
+      return row;
+    };
+
+    const updateFontPreview = (event) => {
+      const query = event.target.value.trim().toLowerCase();
+      const options = Array.from(elements.fontOptions.children);
+      if (!options.length) return;
+
+      let anyVisible = false;
+      options.forEach(option => {
+        const match = option.textContent.toLowerCase().includes(query);
+        option.style.display = query ? (match ? '' : 'none') : '';
+        if (match) anyVisible = true;
+      });
+
+      elements.fontOptions.classList.toggle('hidden', !query && !anyVisible);
+      if (query && anyVisible) {
+        elements.fontOptions.classList.remove('hidden');
+      }
+    };
+
 
     const startRotatingMessages = (messages, interval = 2000) => {
+      const statusPill = elements.statusPill;
+      if (!statusPill) return () => {};
+
       let messageIndex = 0;
-      const statusPill = document.querySelector('.panel-title + span');
 
       const rotateMessage = () => {
         if (statusPill && messages[messageIndex]) {
@@ -1553,14 +1645,15 @@
         }
       };
 
-      // Start immediately
       rotateMessage();
-
-      // Set up interval
       const intervalId = setInterval(rotateMessage, interval);
 
-      // Return function to stop the rotation
-      return () => clearInterval(intervalId);
+      return () => {
+        clearInterval(intervalId);
+        if (statusPill) {
+          statusPill.textContent = '';
+        }
+      };
     };
 
     // Optimized fetch with abort controller and keepalive
@@ -1624,8 +1717,6 @@
         setBrandStyleLoading(false);
         currentBrandStyleController = null;
         stopRotating(); // Stop rotating messages
-        // Reset status pill
-        document.querySelector('.panel-title + span').textContent = '';
       }
     };
 
@@ -1696,8 +1787,6 @@
         setLoading(false);
         currentController = null;
         stopRotating(); // Stop rotating messages
-        // Reset status pill
-        document.querySelector('.panel-title + span').textContent = '';
       }
     });
 
@@ -1880,12 +1969,17 @@
     updateProgressIndicator(1); // Start with step 1 active
 
     // Color picker functionality
-    elements.addColorBtn.addEventListener('click', () => {
-      elements.colorPickers.appendChild(createColorPicker());
-    });
+    if (elements.addColorBtn && elements.colorPickers) {
+      elements.addColorBtn.addEventListener('click', () => {
+        elements.colorPickers.appendChild(createColorPicker());
+        elements.colorPickers.classList.remove('hidden');
+      });
+    }
 
     // Font preview update
-    elements.editFontStyle.addEventListener('input', updateFontPreview);
+    if (elements.editFontStyle) {
+      elements.editFontStyle.addEventListener('input', updateFontPreview);
+    }
 
     // Editor event listeners
     elements.editorSloganInput.addEventListener('input', (e) => {
@@ -1961,6 +2055,12 @@
       if (diff < 3600) return `${Math.floor(diff / 60)}m`;
       if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
       return `${Math.floor(diff / 86400)}d`;
+    };
+
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
     };
 
     const previewGetMedia = (tweet, mediaMap) => {
