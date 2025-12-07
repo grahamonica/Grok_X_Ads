@@ -1,11 +1,19 @@
 import os
 import json
+from pathlib import Path
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+
+from dotenv import load_dotenv
 import httpx
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiless
+from pydantic import BaseModel
+
+load_dotenv()
 
 app = FastAPI(title="Grok Ad Demographics API")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Environment variable for Grok API key
 GROK_API_KEY = os.getenv("GROK_API_KEY")
@@ -431,6 +439,11 @@ async def analyze_brand_style(request: BrandStyleRequest):
 
 @app.get("/")
 async def root():
-    """Root endpoint."""
-    return {"message": "Grok Ad Demographics API"}
-
+    """Serve the single-page UI."""
+    index_path = Path(__file__).parent / "static" / "index.html"
+    if not index_path.exists():
+        return HTMLResponse(
+            content="UI not found. Ensure static/index.html exists.",
+            status_code=404
+        )
+    return HTMLResponse(index_path.read_text(encoding="utf-8"))
