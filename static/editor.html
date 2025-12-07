@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ad Editor | Grok X Ads</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg: #0b0b0b;
+      --card: #101010;
+      --raised: #141414;
+      --ink: #f5f5f5;
+      --muted: #9b9b9b;
+      --border: #1f1f1f;
+      --accent: #ffffff;
+      --ghost: #191919;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 20% 20%, #111 0%, #0a0a0a 35%, #050505 100%);
+      color: var(--ink);
+      font-family: 'Space Grotesk', 'SF Pro Display', sans-serif;
+      min-height: 100vh;
+      letter-spacing: -0.01em;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+    }
+
+    .logo img {
+      width: 24px;
+      height: 24px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #f9f9f9;
+      color: #0b0b0b;
+      font-weight: 600;
+      font-size: 14px;
+      transition: transform 0.12s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    }
+
+    .ghost-btn {
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .editor-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .editor-wrapper {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .canvas-container {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .ad-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-width: 100%;
+    }
+
+    .text-overlay {
+      position: absolute;
+      cursor: move;
+      user-select: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: var(--ink);
+      font-weight: 600;
+      text-align: center;
+      min-width: 120px;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      z-index: 10;
+    }
+
+    .text-overlay:hover {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .text-overlay.dragging {
+      opacity: 0.8;
+      cursor: grabbing;
+      transform: scale(1.05);
+      z-index: 100;
+    }
+
+    .text-overlay.slogan {
+      font-size: 32px;
+      line-height: 1.2;
+    }
+
+    .text-overlay.company {
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--raised), #0d0d0d);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--ghost);
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #2d2d2d;
+      box-shadow: 0 0 0 1px #2d2d2d;
+    }
+
+    .color-preview {
+      width: 100%;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--ghost);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--ink);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--ink);
+      cursor: pointer;
+      border: none;
+    }
+
+    .value-display {
+      min-width: 40px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+
+    .error {
+      padding: 16px;
+      background: rgba(243, 183, 183, 0.1);
+      border: 1px solid rgba(243, 183, 183, 0.3);
+      border-radius: 8px;
+      color: #f3b7b7;
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-label="xAI logo">
+          <img src="/static/Xicon.jpg" alt="X">
+        </div>
+        <div class="brand-title">Ad Editor</div>
+      </div>
+      <div class="controls">
+        <button id="downloadBtn" class="ghost-btn">Download Image</button>
+        <button id="resetBtn" class="ghost-btn">Reset Position</button>
+      </div>
+    </header>
+
+    <div class="editor-wrapper">
+      <div class="canvas-container">
+        <div id="errorMsg" class="error hidden"></div>
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <img id="adImage" class="ad-image" alt="Generated ad" crossorigin="anonymous" style="display: none;">
+          <div id="sloganOverlay" class="text-overlay slogan" style="top: 70%; left: 50%; transform: translate(-50%, -50%);"></div>
+          <div id="companyOverlay" class="text-overlay company" style="top: 85%; left: 50%; transform: translate(-50%, -50%);"></div>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="panel">
+          <div class="panel-title">Text Content</div>
+          <div class="form-group">
+            <label for="sloganInput">Slogan</label>
+            <input type="text" id="sloganInput" placeholder="Enter slogan">
+          </div>
+          <div class="form-group">
+            <label for="companyInput">Company Name</label>
+            <input type="text" id="companyInput" placeholder="Enter company name">
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Slogan Style</div>
+          <div class="form-group">
+            <label for="sloganFontSize">Font Size</label>
+            <div class="slider-group">
+              <input type="range" id="sloganFontSize" min="16" max="72" value="32">
+              <span class="value-display" id="sloganFontSizeValue">32px</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="sloganColor">Text Color</label>
+            <input type="text" id="sloganColor" placeholder="#FFFFFF">
+            <div class="color-preview" id="sloganColorPreview" style="background: #FFFFFF;"></div>
+          </div>
+          <div class="form-group">
+            <label for="sloganOpacity">Opacity</label>
+            <div class="slider-group">
+              <input type="range" id="sloganOpacity" min="0" max="100" value="100">
+              <span class="value-display" id="sloganOpacityValue">100%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Company Style</div>
+          <div class="form-group">
+            <label for="companyFontSize">Font Size</label>
+            <div class="slider-group">
+              <input type="range" id="companyFontSize" min="12" max="48" value="24">
+              <span class="value-display" id="companyFontSizeValue">24px</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="companyColor">Text Color</label>
+            <input type="text" id="companyColor" placeholder="#FFFFFF">
+            <div class="color-preview" id="companyColorPreview" style="background: #FFFFFF;"></div>
+          </div>
+          <div class="form-group">
+            <label for="companyOpacity">Opacity</label>
+            <div class="slider-group">
+              <input type="range" id="companyOpacity" min="0" max="100" value="100">
+              <span class="value-display" id="companyOpacityValue">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    // Get image URL from parameters, or use hardcoded fallback
+    const originalImageUrl = urlParams.get('image') || 'https://imgen.x.ai/xai-imgen/xai-tmp-imgen-c2cd28b2-c059-466d-abdb-136c88f3f153.jpeg';
+    const imageUrl = `/proxy-image?image_url=${encodeURIComponent(originalImageUrl)}`;
+    const slogan = urlParams.get('slogan') || '';
+    const company = urlParams.get('company') || '';
+    const colors = urlParams.get('colors') ? urlParams.get('colors').split(',') : [];
+    const fontStyle = urlParams.get('fontStyle') || 'Modern Sans-Serif';
+
+    // DOM elements
+    const elements = {
+      adImage: document.getElementById('adImage'),
+      sloganOverlay: document.getElementById('sloganOverlay'),
+      companyOverlay: document.getElementById('companyOverlay'),
+      canvasWrapper: document.getElementById('canvasWrapper'),
+      errorMsg: document.getElementById('errorMsg'),
+      sloganInput: document.getElementById('sloganInput'),
+      companyInput: document.getElementById('companyInput'),
+      sloganFontSize: document.getElementById('sloganFontSize'),
+      sloganColor: document.getElementById('sloganColor'),
+      sloganOpacity: document.getElementById('sloganOpacity'),
+      companyFontSize: document.getElementById('companyFontSize'),
+      companyColor: document.getElementById('companyColor'),
+      companyOpacity: document.getElementById('companyOpacity'),
+      sloganFontSizeValue: document.getElementById('sloganFontSizeValue'),
+      sloganOpacityValue: document.getElementById('sloganOpacityValue'),
+      sloganColorPreview: document.getElementById('sloganColorPreview'),
+      companyFontSizeValue: document.getElementById('companyFontSizeValue'),
+      companyOpacityValue: document.getElementById('companyOpacityValue'),
+      companyColorPreview: document.getElementById('companyColorPreview'),
+      downloadBtn: document.getElementById('downloadBtn'),
+      resetBtn: document.getElementById('resetBtn')
+    };
+
+    // Initialize text content
+    elements.sloganInput.value = slogan;
+    elements.companyInput.value = company;
+    elements.sloganOverlay.textContent = slogan;
+    elements.companyOverlay.textContent = company;
+
+    // Set initial colors from API if provided
+    if (colors.length > 0) {
+      elements.sloganColor.value = colors[0];
+      elements.sloganColorPreview.style.background = colors[0];
+      elements.sloganOverlay.style.color = colors[0];
+      
+      if (colors.length > 1) {
+        elements.companyColor.value = colors[1];
+        elements.companyColorPreview.style.background = colors[1];
+        elements.companyOverlay.style.color = colors[1];
+      }
+    }
+
+    // Load image (hardcoded URL)
+    elements.adImage.onload = () => {
+      elements.adImage.style.display = 'block';
+      updateCanvasSize();
+    };
+    
+    elements.adImage.onerror = () => {
+      elements.errorMsg.classList.remove('hidden');
+      elements.errorMsg.textContent = 'Failed to load image. Please check the image URL.';
+    };
+    
+    // Set src after handlers are attached
+    elements.adImage.src = imageUrl;
+    
+    // Check if image is already loaded (cached)
+    if (elements.adImage.complete && elements.adImage.naturalWidth > 0) {
+      elements.adImage.style.display = 'block';
+      updateCanvasSize();
+    }
+
+    // Update canvas size based on image
+    function updateCanvasSize() {
+      const img = elements.adImage;
+      if (img.complete && img.naturalWidth > 0) {
+        elements.canvasWrapper.style.width = '100%';
+        elements.canvasWrapper.style.maxWidth = `${img.naturalWidth}px`;
+      }
+    }
+
+    // Drag functionality
+    let draggedElement = null;
+    let offset = { x: 0, y: 0 };
+
+    function makeDraggable(element) {
+      element.addEventListener('mousedown', (e) => {
+        if (e.target === element || element.contains(e.target)) {
+          draggedElement = element;
+          const rect = element.getBoundingClientRect();
+          const wrapperRect = elements.canvasWrapper.getBoundingClientRect();
+          offset.x = e.clientX - rect.left - rect.width / 2;
+          offset.y = e.clientY - rect.top - rect.height / 2;
+          element.classList.add('dragging');
+          e.preventDefault();
+        }
+      });
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      if (draggedElement) {
+        const wrapperRect = elements.canvasWrapper.getBoundingClientRect();
+        const wrapperWidth = wrapperRect.width;
+        const wrapperHeight = wrapperRect.height;
+        const elementRect = draggedElement.getBoundingClientRect();
+        
+        let x = e.clientX - wrapperRect.left - offset.x;
+        let y = e.clientY - wrapperRect.top - offset.y;
+        
+        // Constrain to canvas bounds
+        x = Math.max(elementRect.width / 2, Math.min(x, wrapperWidth - elementRect.width / 2));
+        y = Math.max(elementRect.height / 2, Math.min(y, wrapperHeight - elementRect.height / 2));
+        
+        const percentX = (x / wrapperWidth) * 100;
+        const percentY = (y / wrapperHeight) * 100;
+        
+        draggedElement.style.left = `${percentX}%`;
+        draggedElement.style.top = `${percentY}%`;
+        draggedElement.style.transform = 'translate(-50%, -50%)';
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+        draggedElement = null;
+      }
+    });
+
+    // Initialize draggable
+    makeDraggable(elements.sloganOverlay);
+    makeDraggable(elements.companyOverlay);
+
+    // Text input handlers
+    elements.sloganInput.addEventListener('input', (e) => {
+      elements.sloganOverlay.textContent = e.target.value;
+    });
+
+    elements.companyInput.addEventListener('input', (e) => {
+      elements.companyOverlay.textContent = e.target.value;
+    });
+
+    // Style controls
+    elements.sloganFontSize.addEventListener('input', (e) => {
+      const size = e.target.value;
+      elements.sloganFontSizeValue.textContent = `${size}px`;
+      elements.sloganOverlay.style.fontSize = `${size}px`;
+    });
+
+    elements.sloganColor.addEventListener('input', (e) => {
+      const color = e.target.value;
+      if (isValidColor(color)) {
+        elements.sloganColorPreview.style.background = color;
+        elements.sloganOverlay.style.color = color;
+      }
+    });
+
+    elements.sloganOpacity.addEventListener('input', (e) => {
+      const opacity = e.target.value;
+      elements.sloganOpacityValue.textContent = `${opacity}%`;
+      elements.sloganOverlay.style.opacity = opacity / 100;
+    });
+
+    elements.companyFontSize.addEventListener('input', (e) => {
+      const size = e.target.value;
+      elements.companyFontSizeValue.textContent = `${size}px`;
+      elements.companyOverlay.style.fontSize = `${size}px`;
+    });
+
+    elements.companyColor.addEventListener('input', (e) => {
+      const color = e.target.value;
+      if (isValidColor(color)) {
+        elements.companyColorPreview.style.background = color;
+        elements.companyOverlay.style.color = color;
+      }
+    });
+
+    elements.companyOpacity.addEventListener('input', (e) => {
+      const opacity = e.target.value;
+      elements.companyOpacityValue.textContent = `${opacity}%`;
+      elements.companyOverlay.style.opacity = opacity / 100;
+    });
+
+    function isValidColor(color) {
+      const s = new Option().style;
+      s.color = color;
+      return s.color !== '';
+    }
+
+    // Reset positions
+    elements.resetBtn.addEventListener('click', () => {
+      elements.sloganOverlay.style.top = '70%';
+      elements.sloganOverlay.style.left = '50%';
+      elements.companyOverlay.style.top = '85%';
+      elements.companyOverlay.style.left = '50%';
+      elements.sloganOverlay.style.transform = 'translate(-50%, -50%)';
+      elements.companyOverlay.style.transform = 'translate(-50%, -50%)';
+    });
+
+    // Download image with text overlay
+    elements.downloadBtn.addEventListener('click', async () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = elements.adImage;
+        
+        // Wait for image to load
+        if (!img.complete) {
+          await new Promise((resolve) => {
+            img.onload = resolve;
+          });
+        }
+
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+
+        // Draw image
+        ctx.drawImage(img, 0, 0);
+
+        // Draw slogan
+        const sloganRect = elements.sloganOverlay.getBoundingClientRect();
+        const wrapperRect = elements.canvasWrapper.getBoundingClientRect();
+        const scaleX = canvas.width / wrapperRect.width;
+        const scaleY = canvas.height / wrapperRect.height;
+        
+        const sloganX = (sloganRect.left - wrapperRect.left + sloganRect.width / 2) * scaleX;
+        const sloganY = (sloganRect.top - wrapperRect.top + sloganRect.height / 2) * scaleY;
+        
+        ctx.save();
+        ctx.globalAlpha = parseFloat(elements.sloganOverlay.style.opacity || 1);
+        ctx.fillStyle = elements.sloganOverlay.style.color || '#FFFFFF';
+        ctx.font = `${elements.sloganFontSize.value}px ${fontStyle}, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(elements.sloganOverlay.textContent, sloganX, sloganY);
+        ctx.restore();
+
+        // Draw company name
+        const companyRect = elements.companyOverlay.getBoundingClientRect();
+        const companyX = (companyRect.left - wrapperRect.left + companyRect.width / 2) * scaleX;
+        const companyY = (companyRect.top - wrapperRect.top + companyRect.height / 2) * scaleY;
+        
+        ctx.save();
+        ctx.globalAlpha = parseFloat(elements.companyOverlay.style.opacity || 1);
+        ctx.fillStyle = elements.companyOverlay.style.color || '#FFFFFF';
+        ctx.font = `${elements.companyFontSize.value}px ${fontStyle}, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(elements.companyOverlay.textContent, companyX, companyY);
+        ctx.restore();
+
+        // Download
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'ad-image.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+      } catch (error) {
+        alert('Failed to download image: ' + error.message);
+        console.error(error);
+      }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', updateCanvasSize);
+  </script>
+</body>
+</html>
+

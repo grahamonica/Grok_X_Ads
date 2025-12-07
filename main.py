@@ -6,7 +6,7 @@ from typing import List, Optional
 from dotenv import load_dotenv
 import httpx
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -448,3 +448,50 @@ async def root():
             status_code=404
         )
     return HTMLResponse(index_path.read_text(encoding="utf-8"))
+
+
+@app.get("/editor")
+async def editor():
+    """Serve the ad editor UI."""
+    editor_path = Path(__file__).parent / "static" / "editor.html"
+    if not editor_path.exists():
+        return HTMLResponse(
+            content="Editor not found. Ensure static/editor.html exists.",
+            status_code=404
+        )
+    return HTMLResponse(editor_path.read_text(encoding="utf-8"))
+
+
+@app.get("/proxy-image")
+async def proxy_image(image_url: str):
+    """Proxy image requests to bypass CORS issues."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                image_url,
+                timeout=30.0,
+                follow_redirects=True
+            )
+            response.raise_for_status()
+            
+            # Determine content type
+            content_type = response.headers.get("content-type", "image/jpeg")
+            
+            return Response(
+                content=response.content,
+                media_type=content_type,
+                headers={
+                    "Cache-Control": "public, max-age=3600",
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Failed to fetch image: {e.response.text}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error proxying image: {str(e)}"
+        )
