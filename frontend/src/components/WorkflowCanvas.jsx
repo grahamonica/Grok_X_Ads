@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState, useMemo, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -8,6 +8,7 @@ import {
   useEdgesState,
   addEdge,
   MarkerType,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -17,6 +18,8 @@ import BrandStyleNode from './nodes/BrandStyleNode';
 import GenerateNode from './nodes/GenerateNode';
 import ImageNode from './nodes/ImageNode';
 import PreviewNode from './nodes/PreviewNode';
+
+const PRIMARY_ROW_Y = 200;
 
 // Custom node types
 const nodeTypes = {
@@ -30,7 +33,7 @@ const nodeTypes = {
 
 // Edge style with gradient
 const defaultEdgeStyle = {
-  stroke: '#cfd0d2',
+  stroke: '#ffffff',
   strokeWidth: 2,
 };
 
@@ -39,64 +42,92 @@ const activeEdgeStyle = {
   strokeWidth: 2,
 };
 
+const makeEdge = ({
+  id,
+  source,
+  target,
+  curved = false,
+  animated = false,
+  style = defaultEdgeStyle,
+  color = '#cfd0d2',
+}) => ({
+  id,
+  source,
+  target,
+  sourceHandle: 'output',
+  targetHandle: 'input',
+  type: curved ? 'smoothstep' : 'straight',
+  animated,
+  style,
+  markerEnd: { type: MarkerType.ArrowClosed, color },
+});
+
+const centeredOffsets = (count, spacing) => {
+  if (count <= 1) return [0];
+  const mid = (count - 1) / 2;
+  return Array.from({ length: count }, (_, i) => (i - mid) * spacing);
+};
+
 // Initial node positions
 const initialNodes = [
   {
     id: 'productUrl',
     type: 'productUrl',
-    position: { x: 50, y: 150 },
+    position: { x: 50, y: PRIMARY_ROW_Y },
     data: { 
       status: 'active',
       productUrl: '',
       prompt: '',
+      centerOffset: 0,
     },
   },
   {
     id: 'demographics',
     type: 'demographics',
-    position: { x: 500, y: 100 },
+    position: { x: 500, y: PRIMARY_ROW_Y },
     data: { 
       status: 'pending',
       demographics: null,
+      centerOffset: 0,
     },
   },
   {
     id: 'brandStyle',
     type: 'brandStyle',
-    position: { x: 950, y: 50 },
+    position: { x: 950, y: PRIMARY_ROW_Y },
     data: { 
       status: 'pending',
       confirmedDemographics: null,
+      centerOffset: 0,
     },
   },
 ];
 
 const initialEdges = [
-  {
+  makeEdge({
     id: 'e1-2',
     source: 'productUrl',
     target: 'demographics',
-    sourceHandle: 'output',
-    targetHandle: 'input',
-    animated: true,
+    curved: false,
+    animated: false,
     style: activeEdgeStyle,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#ffffff' },
-  },
-  {
+    color: '#ffffff',
+  }),
+  makeEdge({
     id: 'e2-3',
     source: 'demographics',
     target: 'brandStyle',
-    sourceHandle: 'output',
-    targetHandle: 'input',
+    curved: false,
     animated: false,
     style: defaultEdgeStyle,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#cfd0d2' },
-  },
+    color: '#cfd0d2',
+  }),
 ];
 
 export default function WorkflowCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const reactFlow = useReactFlow();
   
   // State for workflow data
   const [demographicsData, setDemographicsData] = useState(null);
@@ -122,11 +153,11 @@ export default function WorkflowCanvas() {
         if (edge.id === edgeId) {
           return {
             ...edge,
-            animated: isActive,
+            animated: false,
             style: isActive ? activeEdgeStyle : defaultEdgeStyle,
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: isActive ? '#8b5cf6' : '#4b5563',
+              color: '#ffffff',
             },
           };
         }
@@ -252,12 +283,14 @@ export default function WorkflowCanvas() {
       // Create 3 Image nodes directly from the response
       const newNodes = [];
       const newEdges = [];
+      const offsets = centeredOffsets(images.length, 480);
       
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
         const nodeId = `image-${i}`;
-        // Fan out vertically
-        const yPos = 100 + (i - 2) * 400; 
+        const brandNode = nodes.find((n) => n.id === 'brandStyle');
+        const baseY = brandNode?.position?.y ?? PRIMARY_ROW_Y;
+        const yPos = baseY + offsets[i];
         
         newNodes.push({
           id: nodeId,
@@ -267,19 +300,19 @@ export default function WorkflowCanvas() {
             status: 'active',
             imageUrl: image.image_url,
             textPlacement: image.text_placement,
+            centerOffset: offsets[i],
           },
         });
         
-        newEdges.push({
+        newEdges.push(makeEdge({
           id: `e-brand-img-${i}`,
           source: 'brandStyle',
           target: nodeId,
-          sourceHandle: 'output',
-          targetHandle: 'input',
-          animated: true,
+          curved: images.length > 1,
+          animated: false,
           style: activeEdgeStyle,
-          markerEnd: { type: MarkerType.ArrowClosed, color: '#8b5cf6' },
-        });
+          color: '#ffffff',
+        }));
       }
 
       setNodes((nds) => {
@@ -320,6 +353,7 @@ export default function WorkflowCanvas() {
 
        const sourceNode = nds.find(n => n.id === nodeId);
        const yPos = sourceNode ? sourceNode.position.y : 0;
+       const centerOffset = sourceNode?.data?.centerOffset ?? 0;
 
        const newNode = {
          id: previewNodeId,
@@ -328,7 +362,8 @@ export default function WorkflowCanvas() {
          data: {
            status: 'active',
            imageUrl: data.imageUrl,
-           textPlacement: data.textPlacement
+           textPlacement: data.textPlacement,
+           centerOffset,
          }
        };
        return [...nds, newNode];
@@ -337,16 +372,15 @@ export default function WorkflowCanvas() {
      setEdges((eds) => {
        if (eds.find(e => e.target === previewNodeId)) return eds;
        
-       return [...eds, {
+       return [...eds, makeEdge({
          id: `e-${nodeId}-prev`,
          source: nodeId,
          target: previewNodeId,
-         sourceHandle: 'output',
-         targetHandle: 'input',
-         animated: true,
+         curved: false,
+         animated: false,
          style: activeEdgeStyle,
-         markerEnd: { type: MarkerType.ArrowClosed, color: '#8b5cf6' },
-       }];
+         color: '#ffffff',
+       })];
      });
 
      // Mark image node as completed
@@ -405,9 +439,22 @@ export default function WorkflowCanvas() {
   ]);
 
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params) => setEdges((eds) => addEdge({ ...params, type: 'straight', animated: false }, eds)),
     [setEdges]
   );
+
+  // Auto-fit the view to center and zoom to content
+  useEffect(() => {
+    if (!reactFlow) return;
+    const fit = () =>
+      reactFlow.fitView({
+        padding: 0.38,
+        includeHiddenNodes: true,
+        minZoom: 0.2,
+        maxZoom: 1.5,
+      });
+    fit();
+  }, [reactFlow, nodes.length, edges.length]);
 
   return (
     <div className="workflow-app" style={{ width: '100vw', height: '100vh' }}>
@@ -436,7 +483,8 @@ export default function WorkflowCanvas() {
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.25, includeHiddenNodes: true }}
+        nodeOrigin={[0.5, 0.5]}
         minZoom={0.3}
         maxZoom={1.5}
         defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
@@ -471,4 +519,3 @@ export default function WorkflowCanvas() {
     </div>
   );
 }
-
