@@ -1,0 +1,583 @@
+/* ========================================
+   FLORA-STYLE REACTFLOW THEME
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Base colors */
+  --bg: #0a0a0f;
+  --card: #101018;
+  --raised: #16161f;
+  --ink: #f5f5f7;
+  --muted: #8b8b9b;
+  --border: #2a2a3a;
+  --ghost: #1a1a24;
+  
+  /* Flora-inspired palette */
+  --node-active: #6366f1;
+  --node-completed: #10b981;
+  --node-pending: #4b5563;
+  --edge-start: #6366f1;
+  --edge-end: #8b5cf6;
+  --glow-active: 0 0 30px rgba(99, 102, 241, 0.5);
+  --glow-completed: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #0a0a0f;
+  color: var(--ink);
+  font-family: 'Syne', sans-serif;
+}
+
+/* ========================================
+   REACTFLOW CANVAS OVERRIDES
+   ======================================== */
+
+.react-flow {
+  background: radial-gradient(ellipse at 20% 0%, #1a1a2e 0%, #0a0a0f 40%, #050508 100%);
+}
+
+.react-flow__background {
+  background: transparent;
+}
+
+.react-flow__background pattern circle {
+  fill: rgba(99, 102, 241, 0.15);
+}
+
+.react-flow__controls {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.react-flow__controls-button {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+  fill: var(--ink);
+}
+
+.react-flow__controls-button:hover {
+  background: var(--raised);
+}
+
+.react-flow__minimap {
+  background: var(--card) !important;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.react-flow__attribution {
+  display: none;
+}
+
+/* ========================================
+   CUSTOM NODE BASE STYLES
+   ======================================== */
+
+.workflow-node {
+  background: linear-gradient(145deg, #1e1e2a, #141420);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  min-width: 320px;
+  max-width: 400px;
+  font-family: 'Syne', sans-serif;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.workflow-node::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  border-radius: 16px;
+}
+
+.workflow-node:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.1);
+  transform: translateY(-2px);
+}
+
+.workflow-node.active {
+  border-color: var(--node-active);
+  box-shadow: var(--glow-active);
+}
+
+.workflow-node.completed {
+  border-color: var(--node-completed);
+  box-shadow: var(--glow-completed);
+}
+
+.workflow-node.pending {
+  opacity: 0.7;
+}
+
+/* Node Header */
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.node-header-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--node-active), var(--edge-end));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.node-header-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  flex: 1;
+}
+
+.node-header-info {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ghost);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: help;
+}
+
+/* Node Content */
+.node-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Node Status Badge */
+.node-status-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 10;
+  border: 2px solid var(--bg);
+}
+
+.node-status-badge.active {
+  background: var(--node-active);
+  color: white;
+  animation: pulse-badge 1.5s ease-in-out infinite;
+}
+
+.node-status-badge.completed {
+  background: var(--node-completed);
+  color: white;
+}
+
+.node-status-badge.pending {
+  background: var(--node-pending);
+  color: var(--muted);
+}
+
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* ========================================
+   FORM ELEMENTS INSIDE NODES
+   ======================================== */
+
+.node-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.node-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(26, 26, 36, 0.6);
+  color: var(--ink);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.node-input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.node-input:focus {
+  outline: none;
+  border-color: var(--node-active);
+  background: rgba(26, 26, 40, 0.8);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.node-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(26, 26, 36, 0.6);
+  color: var(--ink);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  min-height: 80px;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.node-textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.node-textarea:focus {
+  outline: none;
+  border-color: var(--node-active);
+  background: rgba(26, 26, 40, 0.8);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.node-select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(26, 26, 36, 0.6);
+  color: var(--ink);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b8b9b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.node-select:focus {
+  outline: none;
+  border-color: var(--node-active);
+}
+
+.node-button {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.node-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.node-button:hover::before {
+  left: 100%;
+}
+
+.node-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+
+.node-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.node-button.secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.node-button.secondary:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--node-active);
+}
+
+/* ========================================
+   PILLS (FOR COLORS, MOODS, ETC)
+   ======================================== */
+
+.pills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px;
+  background: rgba(26, 26, 36, 0.4);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pill:hover {
+  background: var(--raised);
+  border-color: var(--muted);
+}
+
+.pill .color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pill .remove-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.pill .remove-btn:hover {
+  color: #f87171;
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+.node-loader {
+  width: 100%;
+  height: 3px;
+  background: rgba(42, 42, 58, 0.5);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.node-loader::after {
+  content: '';
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--node-active), var(--edge-end));
+  border-radius: 999px;
+  animation: loader-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes loader-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ========================================
+   IMAGE PREVIEW
+   ======================================== */
+
+.image-preview {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: var(--ghost);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview-placeholder {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+}
+
+/* ========================================
+   ROW LAYOUTS
+   ======================================== */
+
+.node-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.node-field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   EDGE STYLES
+   ======================================== */
+
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.react-flow__edge.animated path {
+  stroke-dasharray: 5;
+  animation: edge-dash 0.5s linear infinite;
+}
+
+@keyframes edge-dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+/* ========================================
+   CUSTOM HANDLES
+   ======================================== */
+
+.react-flow__handle {
+  width: 12px;
+  height: 12px;
+  background: var(--node-pending);
+  border: 2px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.react-flow__handle:hover {
+  background: var(--node-active);
+  border-color: var(--node-active);
+  transform: scale(1.2);
+}
+
+.react-flow__handle-left {
+  left: -6px;
+}
+
+.react-flow__handle-right {
+  right: -6px;
+}
+
+/* ========================================
+   INFO TOOLTIP
+   ======================================== */
+
+.node-info-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 280px;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.node-header-info:hover + .node-info-tooltip {
+  opacity: 1;
+}
+
+/* ========================================
+   SUCCESS/ERROR STATES
+   ======================================== */
+
+.node-success {
+  padding: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 10px;
+  color: #34d399;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-error {
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  color: #f87171;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
