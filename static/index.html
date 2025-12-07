@@ -1022,6 +1022,7 @@
     <section id="editorSection" class="panel hidden">
       <div class="panel-header">
         <div class="panel-title">Step 5 · Edit ad image</div>
+        <span class="pill">editor</span>
       </div>
       <div class="editor-wrapper">
         <div class="canvas-container">
@@ -1869,23 +1870,12 @@
 
         // Add event listener to the edit button
         document.getElementById('editImageBtn').addEventListener('click', () => {
-          const slogan = window.brandStyleData?.slogan || '';
-          const companyName = window.brandStyleData?.company_name || '';
-          const colors = window.brandStyleData?.colors || [];
-          const fontStyle = window.brandStyleData?.fontStyle || 'Modern Sans-Serif';
-          const textPlacement = result.text_placement ? encodeURIComponent(JSON.stringify(result.text_placement)) : '';
-
-          // Navigate to editor page with parameters
-          const params = new URLSearchParams({
-            image: result.image_url,
-            slogan: slogan,
-            companyName: companyName,
-            colors: colors.join(','),
-            fontStyle: fontStyle,
-            ...(textPlacement && { textPlacement: textPlacement })
-          });
-
-          window.location.href = `/editor?${params.toString()}`;
+          initializeEditor(
+            result.image_url,
+            window.brandStyleData?.slogan || '',
+            '',
+            window.brandStyleData?.colors || []
+          );
         });
 
         // Add event listener to preview button
