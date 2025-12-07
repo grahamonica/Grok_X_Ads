@@ -1,0 +1,24 @@
+Stopping process 95311 that is listening on port 8000 (SIGTERM)
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8000
+ * Running on http://172.23.15.100:8000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [06/Dec/2025 18:34:38] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [06/Dec/2025 18:34:38] "GET /web-app-framework/advertiser-interface/js/i18n/en/app-main.cc5d3de946c36f1e1883.js HTTP/1.1" 200 -
+127.0.0.1 - - [06/Dec/2025 18:34:38] "GET /static.ads-twitter.com/uwt.js HTTP/1.1" 200 -
+127.0.0.1 - - [06/Dec/2025 18:34:38] "GET /web-app-framework/navbars/js/i18n/en/navbars-ads.e7808a642eea0f9e74d7.js HTTP/1.1" 200 -
+127.0.0.1 - - [06/Dec/2025 18:34:38] "GET /www.googletagmanager.com/gtag/js?id=AW-16708923213 HTTP/1.1" 200 -
+127.0.0.1 - - [06/Dec/2025 18:34:38] "GET /cdn.taboola.com/libtrc/unip/1778285/tfa.js HTTP/1.1" 200 -
+127.0.0.1 - - [06/Dec/2025 18:34:38] "[33mPOST /user/i/scriber/pageload HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Dec/2025 18:34:51] "GET /web-app-framework/navbars/js/i18n/en/navbars-ads.e7808a642eea0f9e74d7.js HTTP/1.1" 200 -
+127.0.0.1 - - [06/Dec/2025 18:35:11] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [06/Dec/2025 18:35:12] "[36mGET /static.ads-twitter.com/uwt.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [06/Dec/2025 18:35:12] "[36mGET /web-app-framework/navbars/js/i18n/en/navbars-ads.e7808a642eea0f9e74d7.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [06/Dec/2025 18:35:12] "[33mPOST /user/i/scriber/pageload HTTP/1.1[0m" 404 -
+127.0.0.1 - - [06/Dec/2025 18:35:13] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [06/Dec/2025 18:35:13] "[36mGET /static.ads-twitter.com/uwt.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [06/Dec/2025 18:35:13] "[36mGET /web-app-framework/navbars/js/i18n/en/navbars-ads.e7808a642eea0f9e74d7.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [06/Dec/2025 18:35:14] "[33mPOST /user/i/scriber/pageload HTTP/1.1[0m" 404 -
