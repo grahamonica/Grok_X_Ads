@@ -527,6 +527,87 @@
       100% { transform: translateX(120%); }
     }
 
+    .editor-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .editor-wrapper {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .canvas-container {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .text-overlay {
+      position: absolute;
+      cursor: move;
+      user-select: none;
+      padding: 16px 24px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      color: #ffffff;
+      font-weight: 700;
+      text-align: center;
+      min-width: 140px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      z-index: 10;
+    }
+
+    .text-overlay:hover {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .text-overlay.dragging {
+      opacity: 0.8;
+      cursor: grabbing;
+      transform: scale(1.05);
+      z-index: 100;
+    }
+
+    .text-overlay.slogan {
+      font-size: 70px;
+      line-height: 1.1;
+    }
+
+    .text-overlay.company {
+      font-size: 70px;
+      line-height: 1.1;
+    }
+
+    .color-preview {
+      width: 100%;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
     @media (max-width: 640px) {
       header {
         align-items: flex-start;
@@ -698,6 +779,89 @@
         </div>
       </div>
     </section>
+
+    <section id="editorSection" class="panel hidden">
+      <div class="panel-header">
+        <div class="panel-title">Step 5 · Edit ad image</div>
+        <span class="pill">editor</span>
+      </div>
+      <div class="editor-wrapper">
+        <div class="canvas-container">
+          <div class="canvas-wrapper" id="editorCanvasWrapper">
+            <img id="editorAdImage" class="ad-image" alt="Generated ad" crossorigin="anonymous" style="display: none;">
+            <div id="editorSloganOverlay" class="text-overlay slogan" style="top: 70%; left: 50%; transform: translate(-50%, -50%);"></div>
+            <div id="editorCompanyOverlay" class="text-overlay company" style="top: 85%; left: 50%; transform: translate(-50%, -50%);"></div>
+          </div>
+        </div>
+
+        <div class="sidebar">
+          <div class="panel">
+            <div class="panel-title">Text Content</div>
+            <div class="form-group">
+              <label for="editorSloganInput">Slogan</label>
+              <input type="text" id="editorSloganInput" placeholder="Enter slogan">
+            </div>
+            <div class="form-group">
+              <label for="editorCompanyInput">Company Name</label>
+              <input type="text" id="editorCompanyInput" placeholder="Enter company name">
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Slogan Style</div>
+            <div class="form-group">
+              <label for="editorSloganFontSize">Font Size</label>
+              <div class="slider-group">
+                <input type="range" id="editorSloganFontSize" min="35" max="150" value="70">
+                <span class="value-display" id="editorSloganFontSizeValue">70px</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="editorSloganColor">Text Color</label>
+              <input type="text" id="editorSloganColor" placeholder="#FFFFFF">
+              <div class="color-preview" id="editorSloganColorPreview" style="background: #FFFFFF;"></div>
+            </div>
+            <div class="form-group">
+              <label for="editorSloganOpacity">Opacity</label>
+              <div class="slider-group">
+                <input type="range" id="editorSloganOpacity" min="0" max="100" value="100">
+                <span class="value-display" id="editorSloganOpacityValue">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Company Style</div>
+            <div class="form-group">
+              <label for="editorCompanyFontSize">Font Size</label>
+              <div class="slider-group">
+                <input type="range" id="editorCompanyFontSize" min="35" max="150" value="70">
+                <span class="value-display" id="editorCompanyFontSizeValue">70px</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="editorCompanyColor">Text Color</label>
+              <input type="text" id="editorCompanyColor" placeholder="#FFFFFF">
+              <div class="color-preview" id="editorCompanyColorPreview" style="background: #FFFFFF;"></div>
+            </div>
+            <div class="form-group">
+              <label for="editorCompanyOpacity">Opacity</label>
+              <div class="slider-group">
+                <input type="range" id="editorCompanyOpacity" min="0" max="100" value="100">
+                <span class="value-display" id="editorCompanyOpacityValue">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="actions">
+              <button type="button" id="editorDownloadBtn">Download Edited Image</button>
+              <button type="button" class="ghost-btn" id="editorResetBtn">Reset Positions</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -739,7 +903,28 @@
       editAgeRange: document.getElementById('editAgeRange'),
       editLanguage: document.getElementById('editLanguage'),
       editLocation: document.getElementById('editLocation'),
-      editAudience: document.getElementById('editAudience')
+      editAudience: document.getElementById('editAudience'),
+      editorSection: document.getElementById('editorSection'),
+      editorAdImage: document.getElementById('editorAdImage'),
+      editorSloganOverlay: document.getElementById('editorSloganOverlay'),
+      editorCompanyOverlay: document.getElementById('editorCompanyOverlay'),
+      editorCanvasWrapper: document.getElementById('editorCanvasWrapper'),
+      editorSloganInput: document.getElementById('editorSloganInput'),
+      editorCompanyInput: document.getElementById('editorCompanyInput'),
+      editorSloganFontSize: document.getElementById('editorSloganFontSize'),
+      editorSloganColor: document.getElementById('editorSloganColor'),
+      editorSloganOpacity: document.getElementById('editorSloganOpacity'),
+      editorCompanyFontSize: document.getElementById('editorCompanyFontSize'),
+      editorCompanyColor: document.getElementById('editorCompanyColor'),
+      editorCompanyOpacity: document.getElementById('editorCompanyOpacity'),
+      editorSloganFontSizeValue: document.getElementById('editorSloganFontSizeValue'),
+      editorSloganOpacityValue: document.getElementById('editorSloganOpacityValue'),
+      editorSloganColorPreview: document.getElementById('editorSloganColorPreview'),
+      editorCompanyFontSizeValue: document.getElementById('editorCompanyFontSizeValue'),
+      editorCompanyOpacityValue: document.getElementById('editorCompanyOpacityValue'),
+      editorCompanyColorPreview: document.getElementById('editorCompanyColorPreview'),
+      editorDownloadBtn: document.getElementById('editorDownloadBtn'),
+      editorResetBtn: document.getElementById('editorResetBtn')
     };
 
     const ageRangeOptions = [
@@ -1283,19 +1468,25 @@
 
         const result = await response.json();
 
-        // Log prompt to terminal only
-        console.log('Ad Image Generation Prompt:', result.prompt_used);
-
-        // Display the generated image
+        // Display the generated image and initialize editor
         const imageContainer = document.createElement('div');
         imageContainer.innerHTML = `
           <h4>Generated Ad Image</h4>
           <img src="${result.image_url}" alt="Generated ad" style="max-width: 100%; border-radius: 12px; margin-top: 12px;">
+          <p class="note" style="margin-top: 8px;">Prompt used: ${result.prompt_used}</p>
+          <div class="actions" style="margin-top: 12px;">
+            <button type="button" id="editImageBtn">Edit Image</button>
+          </div>
         `;
 
-        // Replace the generate button area with the image
+        // Replace the generate button area with the image and edit button
         const tile = elements.nextModule.querySelector('.tile');
         tile.innerHTML = imageContainer.innerHTML;
+
+        // Add event listener to the edit button
+        document.getElementById('editImageBtn').addEventListener('click', () => {
+          initializeEditor(result.image_url, window.brandStyleData?.slogan || '', '', window.brandStyleData?.colors || []);
+        });
 
       } catch (error) {
         showAlert(elements.adImageAlert, error.message || 'Failed to generate ad image.');
@@ -1308,6 +1499,260 @@
     // Initialize on page load
     hydrateAgeSelect();
 
+    // Color picker functionality
+    elements.addColorBtn.addEventListener('click', () => {
+      elements.colorPickers.appendChild(createColorPicker());
+    });
+
+    // Font preview update
+    elements.editFontStyle.addEventListener('input', updateFontPreview);
+
+    // Editor event listeners
+    elements.editorSloganInput.addEventListener('input', (e) => {
+      elements.editorSloganOverlay.textContent = e.target.value;
+    });
+
+    elements.editorCompanyInput.addEventListener('input', (e) => {
+      elements.editorCompanyOverlay.textContent = e.target.value;
+    });
+
+    elements.editorSloganFontSize.addEventListener('input', (e) => {
+      const size = e.target.value;
+      elements.editorSloganFontSizeValue.textContent = `${size}px`;
+      elements.editorSloganOverlay.style.fontSize = `${size}px`;
+    });
+
+    elements.editorSloganColor.addEventListener('input', (e) => {
+      const color = e.target.value;
+      if (isValidColor(color)) {
+        elements.editorSloganColorPreview.style.background = color;
+        elements.editorSloganOverlay.style.color = color;
+      }
+    });
+
+    elements.editorSloganOpacity.addEventListener('input', (e) => {
+      const opacity = e.target.value;
+      elements.editorSloganOpacityValue.textContent = `${opacity}%`;
+      elements.editorSloganOverlay.style.opacity = opacity / 100;
+    });
+
+    elements.editorCompanyFontSize.addEventListener('input', (e) => {
+      const size = e.target.value;
+      elements.editorCompanyFontSizeValue.textContent = `${size}px`;
+      elements.editorCompanyOverlay.style.fontSize = `${size}px`;
+    });
+
+    elements.editorCompanyColor.addEventListener('input', (e) => {
+      const color = e.target.value;
+      if (isValidColor(color)) {
+        elements.editorCompanyColorPreview.style.background = color;
+        elements.editorCompanyOverlay.style.color = color;
+      }
+    });
+
+    elements.editorCompanyOpacity.addEventListener('input', (e) => {
+      const opacity = e.target.value;
+      elements.editorCompanyOpacityValue.textContent = `${opacity}%`;
+      elements.editorCompanyOverlay.style.opacity = opacity / 100;
+    });
+
+    elements.editorResetBtn.addEventListener('click', () => {
+      elements.editorSloganOverlay.style.top = '70%';
+      elements.editorSloganOverlay.style.left = '50%';
+      elements.editorCompanyOverlay.style.top = '85%';
+      elements.editorCompanyOverlay.style.left = '50%';
+      elements.editorSloganOverlay.style.transform = 'translate(-50%, -50%)';
+      elements.editorCompanyOverlay.style.transform = 'translate(-50%, -50%)';
+    });
+
+    elements.editorDownloadBtn.addEventListener('click', async () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = elements.editorAdImage;
+
+        // Wait for image to load
+        if (!img.complete) {
+          await new Promise((resolve) => {
+            img.onload = resolve;
+          });
+        }
+
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+
+        // Draw image
+        ctx.drawImage(img, 0, 0);
+
+        // Draw slogan
+        const sloganRect = elements.editorSloganOverlay.getBoundingClientRect();
+        const wrapperRect = elements.editorCanvasWrapper.getBoundingClientRect();
+        const scaleX = canvas.width / wrapperRect.width;
+        const scaleY = canvas.height / wrapperRect.height;
+
+        const sloganX = (sloganRect.left - wrapperRect.left + sloganRect.width / 2) * scaleX;
+        const sloganY = (sloganRect.top - wrapperRect.top + sloganRect.height / 2) * scaleY;
+
+        ctx.save();
+        ctx.globalAlpha = parseFloat(elements.editorSloganOverlay.style.opacity || 1);
+        ctx.fillStyle = elements.editorSloganOverlay.style.color || '#FFFFFF';
+        ctx.font = `${elements.editorSloganFontSize.value}px ${elements.editorSloganOverlay.style.fontFamily || 'Arial, sans-serif'}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(elements.editorSloganOverlay.textContent, sloganX, sloganY);
+        ctx.restore();
+
+        // Draw company name
+        const companyRect = elements.editorCompanyOverlay.getBoundingClientRect();
+        const companyX = (companyRect.left - wrapperRect.left + companyRect.width / 2) * scaleX;
+        const companyY = (companyRect.top - wrapperRect.top + companyRect.height / 2) * scaleY;
+
+        ctx.save();
+        ctx.globalAlpha = parseFloat(elements.editorCompanyOverlay.style.opacity || 1);
+        ctx.fillStyle = elements.editorCompanyOverlay.style.color || '#FFFFFF';
+        ctx.font = `${elements.editorCompanyFontSize.value}px ${elements.editorCompanyOverlay.style.fontFamily || 'Arial, sans-serif'}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(elements.editorCompanyOverlay.textContent, companyX, companyY);
+        ctx.restore();
+
+        // Download
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'edited-ad-image.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+      } catch (error) {
+        alert('Failed to download image: ' + error.message);
+        console.error(error);
+      }
+    });
+
+    // Editor functionality
+    let editorDraggedElement = null;
+    let editorOffset = { x: 0, y: 0 };
+
+    function makeEditorDraggable(element) {
+      element.addEventListener('mousedown', (e) => {
+        if (e.target === element || element.contains(e.target)) {
+          editorDraggedElement = element;
+          const rect = element.getBoundingClientRect();
+          const wrapperRect = elements.editorCanvasWrapper.getBoundingClientRect();
+          editorOffset.x = e.clientX - rect.left - rect.width / 2;
+          editorOffset.y = e.clientY - rect.top - rect.height / 2;
+          element.classList.add('dragging');
+          e.preventDefault();
+        }
+      });
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      if (editorDraggedElement) {
+        const wrapperRect = elements.editorCanvasWrapper.getBoundingClientRect();
+        const wrapperWidth = wrapperRect.width;
+        const wrapperHeight = wrapperRect.height;
+        const elementRect = editorDraggedElement.getBoundingClientRect();
+
+        let x = e.clientX - wrapperRect.left - editorOffset.x;
+        let y = e.clientY - wrapperRect.top - editorOffset.y;
+
+        // Constrain to canvas bounds
+        x = Math.max(elementRect.width / 2, Math.min(x, wrapperWidth - elementRect.width / 2));
+        y = Math.max(elementRect.height / 2, Math.min(y, wrapperHeight - elementRect.height / 2));
+
+        const percentX = (x / wrapperWidth) * 100;
+        const percentY = (y / wrapperHeight) * 100;
+
+        editorDraggedElement.style.left = `${percentX}%`;
+        editorDraggedElement.style.top = `${percentY}%`;
+        editorDraggedElement.style.transform = 'translate(-50%, -50%)';
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (editorDraggedElement) {
+        editorDraggedElement.classList.remove('dragging');
+        editorDraggedElement = null;
+      }
+    });
+
+    function isValidColor(color) {
+      const s = new Option().style;
+      s.color = color;
+      return s.color !== '';
+    }
+
+    function initializeEditor(imageUrl, slogan, company, colors) {
+      // Set image
+      elements.editorAdImage.onload = () => {
+        elements.editorAdImage.style.display = 'block';
+        updateEditorCanvasSize();
+      };
+
+      elements.editorAdImage.src = `/proxy-image?image_url=${encodeURIComponent(imageUrl)}`;
+
+      // Set text content
+      elements.editorSloganInput.value = slogan || '';
+      elements.editorCompanyInput.value = company || '';
+      elements.editorSloganOverlay.textContent = slogan || '';
+      elements.editorCompanyOverlay.textContent = company || '';
+
+      // Set font family from brand style
+      const fontStyle = window.brandStyleData?.fontStyle || 'Modern Sans-Serif';
+      let fontFamily = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+
+      // Map common font style descriptions to actual fonts
+      if (fontStyle.toLowerCase().includes('serif')) {
+        fontFamily = "'Times New Roman', 'Georgia', serif";
+      } else if (fontStyle.toLowerCase().includes('mono') || fontStyle.toLowerCase().includes('tech')) {
+        fontFamily = "'Courier New', 'Monaco', monospace";
+      } else if (fontStyle.toLowerCase().includes('bold') || fontStyle.toLowerCase().includes('geometric')) {
+        fontFamily = "'Arial Black', 'Impact', sans-serif";
+      } else if (fontStyle.toLowerCase().includes('playful') || fontStyle.toLowerCase().includes('rounded')) {
+        fontFamily = "'Comic Sans MS', cursive";
+      } else if (fontStyle.toLowerCase().includes('elegant') || fontStyle.toLowerCase().includes('classic')) {
+        fontFamily = "'Georgia', 'Times New Roman', serif";
+      }
+
+      elements.editorSloganOverlay.style.fontFamily = fontFamily;
+      elements.editorCompanyOverlay.style.fontFamily = fontFamily;
+
+      // Set colors
+      if (colors && colors.length > 0) {
+        elements.editorSloganColor.value = colors[0];
+        elements.editorSloganColorPreview.style.background = colors[0];
+        elements.editorSloganOverlay.style.color = colors[0];
+
+        if (colors.length > 1) {
+          elements.editorCompanyColor.value = colors[1];
+          elements.editorCompanyColorPreview.style.background = colors[1];
+          elements.editorCompanyOverlay.style.color = colors[1];
+        }
+      }
+
+      // Make overlays draggable
+      makeEditorDraggable(elements.editorSloganOverlay);
+      makeEditorDraggable(elements.editorCompanyOverlay);
+
+      // Show editor
+      elements.editorSection.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        elements.editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    function updateEditorCanvasSize() {
+      const img = elements.editorAdImage;
+      if (img.complete && img.naturalWidth > 0) {
+        elements.editorCanvasWrapper.style.width = '100%';
+        elements.editorCanvasWrapper.style.maxWidth = `${img.naturalWidth}px`;
+      }
+    }
   </script>
 </body>
 </html>
