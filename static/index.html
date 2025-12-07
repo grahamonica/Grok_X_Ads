@@ -340,8 +340,8 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 10px;
-      border-radius: 8px;
+      padding: 8px 12px;
+      border-radius: 20px;
       background: var(--ghost);
       border: 1px solid var(--border);
     }
@@ -1324,8 +1324,6 @@
           <span>Product: <strong>${data.product_url}</strong></span>
           <span>Gender: <strong>${data.gender || '—'}</strong></span>
           <span>Age: <strong>${ageLabel}</strong></span>
-        </div>
-        <div class="chip-row">
           <span>Language: <strong>${(data.language || ['—']).join(', ')}</strong></span>
           <span>Location: <strong>${(data.location || ['—']).join(', ')}</strong></span>
         </div>
