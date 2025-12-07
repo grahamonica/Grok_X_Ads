@@ -1,6 +1,6 @@
 import os
 import json
-from typing import List
+from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import httpx
@@ -10,6 +10,8 @@ app = FastAPI(title="Grok Ad Demographics API")
 # Environment variable for Grok API key
 GROK_API_KEY = os.getenv("GROK_API_KEY")
 GROK_API_URL = "https://api.x.ai/v1/chat/completions"
+# Grok image generation follows the OpenAI-compatible images/generations endpoint shape
+GROK_IMAGE_API_URL = "https://api.x.ai/v1/images/generations"
 
 
 # Request model
@@ -24,6 +26,20 @@ class AdDemographics(BaseModel):
     age_range: str
     language: List[str]
     location: str
+
+
+class AdImageRequest(BaseModel):
+    product_url: str
+    gender: Optional[str] = None
+    age_range: Optional[str] = None
+    language: Optional[str] = None
+    location: Optional[str] = None
+
+
+class AdImageResponse(BaseModel):
+    image_url: str
+    prompt_used: Optional[str] = None
+    metadata: Optional[dict] = None
 
 
 async def call_grok_api(product_url: str, custom_prompt: str) -> AdDemographics:
@@ -109,10 +125,106 @@ Please analyze this product and provide the ad demographics in JSON format."""
         )
 
 
+def build_image_prompt(request: AdImageRequest) -> str:
+    """Construct an image-generation prompt using product context and demographics."""
+    demographic_bits = []
+    if request.gender:
+        demographic_bits.append(f"gender: {request.gender}")
+    if request.age_range:
+        demographic_bits.append(f"age range: {request.age_range}")
+    if request.language:
+        demographic_bits.append(f"language: {request.language}")
+    if request.location:
+        demographic_bits.append(f"location: {request.location}")
+
+    demographics_text = "; ".join(demographic_bits) if demographic_bits else "general audience"
+
+    return (
+        "Create a single marketing image that matches the style and visual identity of the product website. "
+        f"Product URL: {request.product_url}. "
+        f"Target demographics: {demographics_text}. "
+        "If product photos are visible on the page, reflect them in the generated image. "
+        "Keep the image clean and ad-ready. Do not include excessive text overlays."
+    )
+
+
+async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
+    """Call Grok image generation API to produce an ad image."""
+    if not GROK_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="GROK_API_KEY environment variable is not set"
+        )
+
+    prompt_text = build_image_prompt(request)
+
+    headers = {
+        "Authorization": f"Bearer {GROK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "grok-2-image",
+        "prompt": prompt_text,
+        "n": 1
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                GROK_IMAGE_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=60.0
+            )
+            response.raise_for_status()
+            result = response.json()
+
+            data = result.get("data")
+            if not data or not isinstance(data, list):
+                raise ValueError("Missing image data in Grok response")
+
+            image_entry = data[0]
+            image_url = image_entry.get("url")
+            if not image_url and image_entry.get("b64_json"):
+                image_url = f"data:image/png;base64,{image_entry['b64_json']}"
+
+            if not image_url:
+                raise ValueError("No image URL returned by Grok")
+
+            return AdImageResponse(
+                image_url=image_url,
+                prompt_used=prompt_text,
+                metadata={"raw": image_entry}
+            )
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Grok image API error: {e.response.text}"
+        )
+    except (KeyError, json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse Grok image API response: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(e)}"
+        )
+
+
 @app.post("/generate-demographics", response_model=AdDemographics)
 async def generate_demographics(request: AdRequest):
     """Generate ad demographics for a product using Grok API."""
     return await call_grok_api(request.product_url, request.prompt)
+
+
+@app.post("/generate-ad-image", response_model=AdImageResponse)
+async def generate_ad_image(request: AdImageRequest):
+    """Generate a single ad image tailored to the product and demographics."""
+    return await call_grok_image_api(request)
 
 
 @app.get("/")
