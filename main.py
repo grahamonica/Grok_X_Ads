@@ -40,6 +40,9 @@ class AdImageRequest(BaseModel):
     age_range: Optional[str] = None
     language: Optional[str] = None
     location: Optional[str] = None
+    colors: Optional[List[str]] = None  # Brand colors in hex format (e.g., ["#FF5733", "#3498DB"])
+    mood: Optional[str] = None  # Brand mood (e.g., "professional", "playful", "luxury")
+    product_description: Optional[str] = None  # Product/service description for image generation
 
 
 class AdImageResponse(BaseModel):
@@ -57,6 +60,7 @@ class BrandStyleResponse(BaseModel):
     mood: str  # Mood/atmosphere for image generation (e.g., "professional", "playful", "luxury")
     font_style: str  # Font style recommendation for HTML (e.g., "Modern Sans-Serif", "Elegant Serif")
     slogan: Optional[str] = None  # Suggested slogan for the business
+    product_description: str  # Detailed description of the product/service for image generation
 
 
 async def call_grok_api(product_url: str, custom_prompt: str) -> AdDemographics:
@@ -170,26 +174,45 @@ Please analyze this product and provide the ad demographics in JSON format."""
 
 
 def build_image_prompt(request: AdImageRequest) -> str:
-    """Construct an image-generation prompt using product context and demographics."""
-    demographic_bits = []
-    if request.gender:
-        demographic_bits.append(f"gender: {request.gender}")
-    if request.age_range:
-        demographic_bits.append(f"age range: {request.age_range}")
-    if request.language:
-        demographic_bits.append(f"language: {request.language}")
-    if request.location:
-        demographic_bits.append(f"location: {request.location}")
-
-    demographics_text = "; ".join(demographic_bits) if demographic_bits else "general audience"
-
-    return (
-        "Create a single marketing image that matches the style and visual identity of the product website. "
-        f"Product URL: {request.product_url}. "
-        f"Target demographics: {demographics_text}. "
-        "If product photos are visible on the page, reflect them in the generated image. "
-        "Keep the image clean and ad-ready. Do not include excessive text overlays."
+    """Construct a concise image-generation prompt using product description, brand styles, and demographics."""
+    # Start with product description - this is the core focus
+    if request.product_description:
+        # Truncate product description if too long to leave room for other instructions
+        max_desc_length = 400
+        product_desc = request.product_description[:max_desc_length] if len(request.product_description) > max_desc_length else request.product_description
+        product_focus = f"Professional ad image: {product_desc}"
+    else:
+        product_focus = f"Professional ad image for product at {request.product_url}"
+    
+    # Build brand style instructions (concise)
+    style_parts = []
+    if request.colors:
+        colors_list = ", ".join(request.colors[:3])  # Limit to 3 colors to save space
+        style_parts.append(f"colors: {colors_list}")
+    if request.mood:
+        style_parts.append(f"mood: {request.mood}")
+    
+    style_text = f" Brand style: {', '.join(style_parts)}." if style_parts else ""
+    
+    # Concise requirements
+    requirements = (
+        " No text. No people. Product-focused. "
+        "Bottom third: simple/uncluttered for text overlay. "
+        "Upper two-thirds: product hero. Professional quality."
     )
+    
+    prompt = f"{product_focus}{style_text}{requirements}"
+    
+    # Ensure prompt doesn't exceed 1024 characters
+    if len(prompt) > 1024:
+        # Further truncate product description if needed
+        available_space = 1024 - len(style_text) - len(requirements) - 50  # 50 char buffer
+        if request.product_description:
+            truncated_desc = request.product_description[:available_space]
+            product_focus = f"Professional ad image: {truncated_desc}"
+            prompt = f"{product_focus}{style_text}{requirements}"
+    
+    return prompt[:1024]  # Hard limit
 
 
 async def call_grok_brand_style_api(product_url: str) -> BrandStyleResponse:
@@ -235,17 +258,36 @@ following exact fields:
   slogan that captures the essence of the brand based on the website content. If you cannot 
   determine or create a suitable slogan, set this field to null.
 
+- product_description: REQUIRED - A detailed, descriptive string about the product or service 
+  being offered. This should be a comprehensive description (2-4 sentences) that captures:
+  * What the product/service is
+  * Key features, benefits, or characteristics
+  * Visual elements that would be important for creating an advertisement image
+  * The type of product (physical product, digital service, software, etc.)
+  This description will be used to generate high-quality advertisement images, so be specific 
+  about visual aspects, product appearance, and context. Examples:
+  * "A sleek, modern smartphone with a premium metal frame and vibrant OLED display, featuring 
+    advanced camera technology and minimalist design aesthetic."
+  * "An online fitness coaching platform offering personalized workout plans and nutrition guidance, 
+    with a focus on home-based exercises and progress tracking."
+  * "A luxury skincare line featuring organic ingredients, elegant packaging, and products designed 
+    for anti-aging and hydration."
+
 CRITICAL: 
-- Browse the website thoroughly to understand its visual identity, color scheme, typography, and messaging.
+- Browse the website thoroughly to understand its visual identity, color scheme, typography, messaging, 
+  and most importantly, the product or service being offered.
 - The colors array must contain 3-5 color strings that accurately represent the brand.
 - The mood should be a single descriptive word or short phrase.
 - The font_style should be a descriptive category that can guide HTML font selection.
-- Return ONLY valid JSON with these four fields, no additional text or markdown formatting."""
+- The product_description must be detailed and visually descriptive to enable high-quality image generation.
+- Return ONLY valid JSON with these five fields, no additional text or markdown formatting."""
 
     user_message = f"""Business Website URL: {product_url}
 
 Please browse this website and analyze its brand identity. Extract the colors, mood, font style, 
-and slogan that would be useful for creating advertisements. Return the analysis in JSON format."""
+slogan, and a detailed product description that would be useful for creating advertisements. 
+Pay special attention to understanding what product or service is being offered, and provide a 
+comprehensive visual description of it. Return the analysis in JSON format."""
 
     headers = {
         "Authorization": f"Bearer {GROK_API_KEY}",
@@ -299,7 +341,7 @@ and slogan that would be useful for creating advertisements. Return the analysis
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error: {str(e)}"
-        )
+    )
 
 
 async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
