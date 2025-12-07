@@ -55,87 +55,7 @@
       justify-content: space-between;
       gap: 16px;
       margin-bottom: 32px;
-      padding: 16px 0;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(10px);
     }
-
-    .progress-indicator {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .step-number {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--ghost);
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    .step-label {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-weight: 500;
-    }
-
-    .step.active .step-number {
-      background: var(--accent);
-      color: var(--bg);
-    }
-
-    .step.active .step-label {
-      color: var(--ink);
-      font-weight: 600;
-    }
-
-    .step.completed .step-number {
-      background: var(--accent);
-      color: var(--bg);
-    }
-
-    .step.completed .step-label {
-      color: var(--muted);
-    }
-
-    .arrow {
-      color: var(--muted);
-      font-size: 14px;
-      margin: 0 4px;
-    }
-
-    .sticky-header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 0;
-      margin-bottom: 0;
-      backdrop-filter: blur(10px);
-    }
-
 
     .brand {
       display: flex;
@@ -944,7 +864,7 @@
 </head>
 <body>
   <div class="frame">
-    <header class="sticky-header">
+    <header>
       <div class="brand">
         <div class="logo" aria-label="xAI logo">
           <img src="/static/Xicon.jpg" alt="X" loading="lazy">
@@ -952,32 +872,6 @@
         <div class="brand-label">
           <div class="brand-title">Grok X Ads</div>
           <div class="brand-sub">Product → Demographics → Brand Style → Ad image</div>
-        </div>
-      </div>
-      <div class="progress-indicator">
-        <div class="step active" id="step1">
-          <span class="step-number">1</span>
-          <span class="step-label">Demographics</span>
-        </div>
-        <div class="arrow">→</div>
-        <div class="step" id="step2">
-          <span class="step-number">2</span>
-          <span class="step-label">Brand Style</span>
-        </div>
-        <div class="arrow">→</div>
-        <div class="step" id="step3">
-          <span class="step-number">3</span>
-          <span class="step-label">Generate</span>
-        </div>
-        <div class="arrow">→</div>
-        <div class="step" id="step4">
-          <span class="step-number">4</span>
-          <span class="step-label">Edit</span>
-        </div>
-        <div class="arrow">→</div>
-        <div class="step" id="step5">
-          <span class="step-number">5</span>
-          <span class="step-label">Preview</span>
         </div>
       </div>
     </header>
@@ -1274,13 +1168,12 @@
       brandStyleAlert: document.getElementById('brandStyleAlert'),
       brandStyleLoader: document.getElementById('brandStyleLoader'),
       confirmBrandStyleBtn: document.getElementById('confirmBrandStyleBtn'),
-      colorPills: document.getElementById('colorPills'),
-      colorSearch: document.getElementById('colorSearch'),
-      moodPills: document.getElementById('moodPills'),
-      moodSearch: document.getElementById('moodSearch'),
-      fontStyleDisplay: document.getElementById('fontStyleDisplay'),
-      fontSearch: document.getElementById('fontSearch'),
-      fontOptions: document.getElementById('fontOptions'),
+      reRunBrandStyleBtn: document.getElementById('reRunBrandStyleBtn'),
+      colorPickers: document.getElementById('colorPickers'),
+      addColorBtn: document.getElementById('addColorBtn'),
+      editMood: document.getElementById('editMood'),
+      editFontStyle: document.getElementById('editFontStyle'),
+      fontPreview: document.getElementById('fontPreview'),
       editSlogan: document.getElementById('editSlogan'),
       editProductDescription: document.getElementById('editProductDescription'),
       generateAdBtn: document.getElementById('generateAdBtn'),
@@ -1726,8 +1619,7 @@
 
         setBrandStyleFields(result);
         elements.brandStylePanel.classList.remove('hidden');
-        // elements.brandStyleBadge.textContent = 'autofill by Grok';
-        updateProgressIndicator(2); // Stay on step 2 while analyzing
+        elements.brandStyleBadge.textContent = 'autofill by Grok';
 
         console.log(`Brand style API call completed in ${elapsed}s`);
       } catch (error) {
@@ -1797,8 +1689,8 @@
 
         setEditFields(result, prompt);
         elements.editPanel.classList.remove('hidden');
-        // elements.autofillBadge.textContent = 'autofill by Grok';
-        updateProgressIndicator(2); // Move to step 2
+        elements.autofillBadge.textContent = 'autofill by Grok';
+        
         console.log(`API call completed in ${elapsed}s`);
       } catch (error) {
         if (error.name === 'AbortError') {
@@ -1960,32 +1852,6 @@
         elements.generateAdBtn.disabled = false;
       }
     });
-
-    // Progress indicator functions
-    function updateProgressIndicator(currentStep) {
-      // Reset all steps
-      for (let i = 1; i <= 5; i++) {
-        const stepEl = document.getElementById(`step${i}`);
-        if (stepEl) {
-          stepEl.classList.remove('active', 'completed');
-        }
-      }
-
-      // Set current step as active
-      const currentStepEl = document.getElementById(`step${currentStep}`);
-      if (currentStepEl) {
-        currentStepEl.classList.add('active');
-      }
-
-      // Set previous steps as completed
-      for (let i = 1; i < currentStep; i++) {
-        const stepEl = document.getElementById(`step${i}`);
-        if (stepEl) {
-          stepEl.classList.remove('active');
-          stepEl.classList.add('completed');
-        }
-      }
-    }
 
     // Initialize on page load
     hydrateAgeSelect();
