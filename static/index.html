@@ -711,13 +711,11 @@
       editPanel: document.getElementById('editPanel'),
       editAlert: document.getElementById('editAlert'),
       confirmBtn: document.getElementById('confirmBtn'),
-      reRunBtn: document.getElementById('reRunBtn'),
       brandStylePanel: document.getElementById('brandStylePanel'),
       brandStyleBadge: document.getElementById('brandStyleBadge'),
       brandStyleAlert: document.getElementById('brandStyleAlert'),
       brandStyleLoader: document.getElementById('brandStyleLoader'),
       confirmBrandStyleBtn: document.getElementById('confirmBrandStyleBtn'),
-      reRunBrandStyleBtn: document.getElementById('reRunBrandStyleBtn'),
       colorPills: document.getElementById('colorPills'),
       colorSearch: document.getElementById('colorSearch'),
       moodPills: document.getElementById('moodPills'),
@@ -741,9 +739,7 @@
       editAgeRange: document.getElementById('editAgeRange'),
       editLanguage: document.getElementById('editLanguage'),
       editLocation: document.getElementById('editLocation'),
-      editAudience: document.getElementById('editAudience'),
-      reRunBtn: document.getElementById('reRunBtn'),
-      reRunBrandStyleBtn: document.getElementById('reRunBrandStyleBtn')
+      editAudience: document.getElementById('editAudience')
     };
 
     const ageRangeOptions = [
@@ -938,25 +934,6 @@
       });
     };
 
-    const updateFontPreview = () => {
-      const fontStyle = elements.editFontStyle.value.trim();
-      let fontFamily = "'Chirp', 'Space Grotesk', 'SF Pro Display', 'Neue Haas Grotesk', sans-serif";
-
-      // Map common font style descriptions to actual fonts
-      if (fontStyle.toLowerCase().includes('serif')) {
-        fontFamily = "'Times New Roman', 'Georgia', serif";
-      } else if (fontStyle.toLowerCase().includes('mono') || fontStyle.toLowerCase().includes('tech')) {
-        fontFamily = "'Courier New', 'Monaco', monospace";
-      } else if (fontStyle.toLowerCase().includes('bold') || fontStyle.toLowerCase().includes('geometric')) {
-        fontFamily = "'Arial Black', 'Impact', sans-serif";
-      } else if (fontStyle.toLowerCase().includes('playful') || fontStyle.toLowerCase().includes('rounded')) {
-        fontFamily = "'Comic Sans MS', cursive";
-      } else if (fontStyle.toLowerCase().includes('elegant') || fontStyle.toLowerCase().includes('classic')) {
-        fontFamily = "'Georgia', 'Times New Roman', serif";
-      }
-
-      elements.fontPreview.style.fontFamily = fontFamily;
-    };
 
     const setBrandStyleFields = (data) => {
       requestAnimationFrame(() => {
@@ -1230,17 +1207,6 @@
       await callBrandStyleAPI(product_url);
     });
 
-    elements.reRunBtn.addEventListener('click', () => {
-      if (!elements.productUrl.value.trim()) {
-        elements.productUrl.value = elements.editProductUrl.value.trim();
-      }
-      if (!elements.prompt.value.trim()) {
-        elements.prompt.value = elements.editAudience.value.trim();
-      }
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-    });
 
     elements.confirmBrandStyleBtn.addEventListener('click', () => {
       clearAlert(elements.brandStyleAlert);
@@ -1269,12 +1235,6 @@
       scrollToNextModule();
     });
 
-    elements.reRunBrandStyleBtn.addEventListener('click', () => {
-      const productUrl = elements.editProductUrl.value.trim();
-      if (productUrl) {
-        callBrandStyleAPI(productUrl);
-      }
-    });
 
     elements.generateAdBtn.addEventListener('click', async () => {
       clearAlert(elements.adImageAlert);
@@ -1348,13 +1308,6 @@
     // Initialize on page load
     hydrateAgeSelect();
 
-    // Color picker functionality
-    elements.addColorBtn.addEventListener('click', () => {
-      elements.colorPickers.appendChild(createColorPicker());
-    });
-
-    // Font preview update
-    elements.editFontStyle.addEventListener('input', updateFontPreview);
   </script>
 </body>
 </html>
