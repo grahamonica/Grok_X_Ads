@@ -1154,6 +1154,36 @@
   </div>
 
   <script>
+    // Utility functions
+    const startRotatingMessages = (messages, interval = 2000, delay = 2000) => {
+      let messageIndex = 0;
+      const statusPill = document.querySelector('.panel-title + span');
+
+      const rotateMessage = () => {
+        if (statusPill && messages[messageIndex]) {
+          statusPill.textContent = messages[messageIndex];
+          messageIndex = (messageIndex + 1) % messages.length;
+        }
+      };
+
+      // Start after delay
+      const delayId = setTimeout(() => {
+        rotateMessage();
+        // Set up interval
+        const intervalId = setInterval(rotateMessage, interval);
+        // Store interval ID for cleanup
+        statusPill._intervalId = intervalId;
+      }, delay);
+
+      // Return function to stop the rotation
+      return () => {
+        clearTimeout(delayId);
+        if (statusPill._intervalId) {
+          clearInterval(statusPill._intervalId);
+        }
+      };
+    };
+
     // Cache DOM elements for performance
     const elements = {
       form: document.getElementById('demographicForm'),
