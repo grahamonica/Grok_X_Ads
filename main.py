@@ -14,6 +14,8 @@ load_dotenv()
 
 app = FastAPI(title="Grok Ad Demographics API")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+# Serve data files (e.g., tweet feeds)
+app.mount("/data", StaticFiles(directory="data"), name="data")
 
 # Environment variable for Grok API key
 GROK_API_KEY = os.getenv("GROK_API_KEY")
