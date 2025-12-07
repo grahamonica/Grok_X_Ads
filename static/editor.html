@@ -149,20 +149,25 @@
       user-select: none;
       padding: 12px 20px;
       border-radius: 8px;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(10px);
-      border: 2px solid rgba(255, 255, 255, 0.3);
       color: var(--ink);
       font-weight: 600;
       text-align: center;
       min-width: 120px;
+      min-height: 40px;
       transition: transform 0.1s ease, box-shadow 0.2s ease;
       z-index: 10;
+      /* Backdrop is now rendered on the image itself */
+      background: transparent;
+      border: none;
+      resize: both;
+      overflow: hidden;
     }
 
     .text-overlay:hover {
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.5);
+      /* Only show subtle highlight on hover */
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
     }
 
     .text-overlay.dragging {
@@ -170,6 +175,9 @@
       cursor: grabbing;
       transform: scale(1.05);
       z-index: 100;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
     }
 
     .text-overlay.slogan {
@@ -393,8 +401,10 @@
     const imageUrl = `/proxy-image?image_url=${encodeURIComponent(originalImageUrl)}`;
     const slogan = urlParams.get('slogan') || '';
     const company = urlParams.get('company') || '';
+    const companyName = urlParams.get('companyName') || company || 'Your Brand';
     const colors = urlParams.get('colors') ? urlParams.get('colors').split(',') : [];
     const fontStyle = urlParams.get('fontStyle') || 'Modern Sans-Serif';
+    const textPlacement = urlParams.get('textPlacement') ? JSON.parse(decodeURIComponent(urlParams.get('textPlacement'))) : null;
 
     // DOM elements
     const elements = {
@@ -423,9 +433,23 @@
 
     // Initialize text content
     elements.sloganInput.value = slogan;
-    elements.companyInput.value = company;
+    elements.companyInput.value = companyName;
     elements.sloganOverlay.textContent = slogan;
-    elements.companyOverlay.textContent = company;
+    elements.companyOverlay.textContent = companyName;
+
+    // Set initial positions from suggested placement
+    if (textPlacement) {
+      if (textPlacement.slogan) {
+        elements.sloganOverlay.style.left = `${textPlacement.slogan.x}%`;
+        elements.sloganOverlay.style.top = `${textPlacement.slogan.y}%`;
+        elements.sloganOverlay.style.transform = 'translate(-50%, -50%)';
+      }
+      if (textPlacement.company) {
+        elements.companyOverlay.style.left = `${textPlacement.company.x}%`;
+        elements.companyOverlay.style.top = `${textPlacement.company.y}%`;
+        elements.companyOverlay.style.transform = 'translate(-50%, -50%)';
+      }
+    }
 
     // Set initial colors from API if provided
     if (colors.length > 0) {
@@ -590,66 +614,66 @@
     // Download image with text overlay
     elements.downloadBtn.addEventListener('click', async () => {
       try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        // Get current positions as percentages and dimensions
+        const wrapperRect = elements.canvasWrapper.getBoundingClientRect();
+        const sloganRect = elements.sloganOverlay.getBoundingClientRect();
+        const companyRect = elements.companyOverlay.getBoundingClientRect();
+
+        const sloganX = ((sloganRect.left - wrapperRect.left + sloganRect.width / 2) / wrapperRect.width) * 100;
+        const sloganY = ((sloganRect.top - wrapperRect.top + sloganRect.height / 2) / wrapperRect.height) * 100;
+        const companyX = ((companyRect.left - wrapperRect.left + companyRect.width / 2) / wrapperRect.width) * 100;
+        const companyY = ((companyRect.top - wrapperRect.top + companyRect.height / 2) / wrapperRect.height) * 100;
+
+        // Convert overlay dimensions to image pixels
         const img = elements.adImage;
-        
-        // Wait for image to load
-        if (!img.complete) {
-          await new Promise((resolve) => {
-            img.onload = resolve;
-          });
+        const scaleX = img.naturalWidth / wrapperRect.width;
+        const scaleY = img.naturalHeight / wrapperRect.height;
+        const sloganWidth = Math.round(sloganRect.width * scaleX);
+        const sloganHeight = Math.round(sloganRect.height * scaleY);
+        const companyWidth = Math.round(companyRect.width * scaleX);
+        const companyHeight = Math.round(companyRect.height * scaleY);
+
+        // Call overlay API
+        const response = await fetch('/overlay-text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            image_url: originalImageUrl,
+            slogan_text: elements.sloganOverlay.textContent,
+            company_text: elements.companyOverlay.textContent,
+            slogan_x: sloganX,
+            slogan_y: sloganY,
+            company_x: companyX,
+            company_y: companyY,
+            slogan_color: elements.sloganOverlay.style.color || '#FFFFFF',
+            company_color: elements.companyOverlay.style.color || '#FFFFFF',
+            slogan_size: elements.sloganFontSize.value,
+            company_size: elements.companyFontSize.value,
+            slogan_width: sloganWidth,
+            slogan_height: sloganHeight,
+            company_width: companyWidth,
+            company_height: companyHeight,
+            font_style: fontStyle
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to overlay text');
         }
 
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-
-        // Draw image
-        ctx.drawImage(img, 0, 0);
-
-        // Draw slogan
-        const sloganRect = elements.sloganOverlay.getBoundingClientRect();
-        const wrapperRect = elements.canvasWrapper.getBoundingClientRect();
-        const scaleX = canvas.width / wrapperRect.width;
-        const scaleY = canvas.height / wrapperRect.height;
-        
-        const sloganX = (sloganRect.left - wrapperRect.left + sloganRect.width / 2) * scaleX;
-        const sloganY = (sloganRect.top - wrapperRect.top + sloganRect.height / 2) * scaleY;
-        
-        ctx.save();
-        ctx.globalAlpha = parseFloat(elements.sloganOverlay.style.opacity || 1);
-        ctx.fillStyle = elements.sloganOverlay.style.color || '#FFFFFF';
-        ctx.font = `${elements.sloganFontSize.value}px ${fontStyle}, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(elements.sloganOverlay.textContent, sloganX, sloganY);
-        ctx.restore();
-
-        // Draw company name
-        const companyRect = elements.companyOverlay.getBoundingClientRect();
-        const companyX = (companyRect.left - wrapperRect.left + companyRect.width / 2) * scaleX;
-        const companyY = (companyRect.top - wrapperRect.top + companyRect.height / 2) * scaleY;
-        
-        ctx.save();
-        ctx.globalAlpha = parseFloat(elements.companyOverlay.style.opacity || 1);
-        ctx.fillStyle = elements.companyOverlay.style.color || '#FFFFFF';
-        ctx.font = `${elements.companyFontSize.value}px ${fontStyle}, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(elements.companyOverlay.textContent, companyX, companyY);
-        ctx.restore();
+        const result = await response.json();
+        const imageData = result.image_base64;
 
         // Download
-        canvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'ad-image.png';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        });
+        const a = document.createElement('a');
+        a.href = imageData;
+        a.download = 'ad-image.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
       } catch (error) {
         alert('Failed to download image: ' + error.message);
         console.error(error);

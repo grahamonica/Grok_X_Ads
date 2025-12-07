@@ -57,6 +57,17 @@ class AdImageResponse(BaseModel):
     image_url: str
     prompt_used: Optional[str] = None
     metadata: Optional[dict] = None
+    text_placement: Optional[dict] = None  # Suggested text placement coordinates
+
+
+class TextPlacementRequest(BaseModel):
+    image_url: str
+    product_description: Optional[str] = None
+
+
+class TextPlacementResponse(BaseModel):
+    slogan: dict  # {"x": float, "y": float} as percentages
+    company: dict  # {"x": float, "y": float} as percentages
 
 
 class BrandStyleRequest(BaseModel):
@@ -68,6 +79,7 @@ class BrandStyleResponse(BaseModel):
     mood: str  # Mood/atmosphere for image generation (e.g., "professional", "playful", "luxury")
     font_style: str  # Font style recommendation for HTML (e.g., "Modern Sans-Serif", "Elegant Serif")
     slogan: Optional[str] = None  # Suggested slogan for the business
+    company_name: Optional[str] = None  # Extracted company/brand name
     product_description: str  # Detailed description of the product/service for image generation
 
 
@@ -192,7 +204,20 @@ def build_image_prompt(request: AdImageRequest) -> str:
         product_focus = f"Professional ad image: {product_desc}"
     else:
         product_focus = f"Professional ad image for product at {request.product_url}"
-    
+
+    # Build demographic targeting instructions
+    demo_parts = []
+    if request.gender and request.gender != "Any":
+        demo_parts.append(request.gender.lower())
+    if request.age_range:
+        demo_parts.append(f"aged {request.age_range}")
+    if request.language:
+        demo_parts.append(f"speaking {request.language}")
+    if request.location:
+        demo_parts.append(f"located in {request.location}")
+
+    demo_text = f" Target audience: {', '.join(demo_parts)}." if demo_parts else ""
+
     # Build brand style instructions (concise)
     style_parts = []
     if request.colors:
@@ -200,27 +225,29 @@ def build_image_prompt(request: AdImageRequest) -> str:
         style_parts.append(f"colors: {colors_list}")
     if request.mood:
         style_parts.append(f"mood: {request.mood}")
-    
+
     style_text = f" Brand style: {', '.join(style_parts)}." if style_parts else ""
-    
+
     # Concise requirements
     requirements = (
-        " No text. No people. Product-focused. "
+        "No text in image, background, or reflections. No logos. No people unless depicting target audience is applicable. Product-focused. "
+        "Keep product depiction accurate and close to real product, minimize hallucination.  keep it consistent with this brand's identity, and target the target audience heavily "
         "Bottom third: simple/uncluttered for text overlay. "
-        "Upper two-thirds: product hero. Professional quality."
+        "Upper two-thirds: product. "
+        "Suggest optimal text placement coordinates for slogan (top text) and company name (bottom text) as percentages from top-left corner."
     )
-    
-    prompt = f"{product_focus}{style_text}{requirements}"
-    
+
+    prompt = f"{requirements}{style_text}{product_focus}{demo_text}"
+
     # Ensure prompt doesn't exceed 1024 characters
     if len(prompt) > 1024:
         # Further truncate product description if needed
-        available_space = 1024 - len(style_text) - len(requirements) - 50  # 50 char buffer
+        available_space = 1024 - len(demo_text) - len(style_text) - len(requirements) - 50  # 50 char buffer
         if request.product_description:
             truncated_desc = request.product_description[:available_space]
-            product_focus = f"Professional ad image: {truncated_desc}"
-            prompt = f"{product_focus}{style_text}{requirements}"
-    
+            product_focus = truncated_desc
+            prompt = f"{product_focus}{demo_text}{style_text}{requirements}"
+
     return prompt[:1024]  # Hard limit
 
 
@@ -262,25 +289,22 @@ following exact fields:
   * "Tech Monospace" (for technology-focused brands)
   Base this on the typography you observe on the website.
 
-- slogan: OPTIONAL - A string containing a suggested slogan or tagline for the business. 
-  If the website already has a clear slogan or tagline, extract it. If not, create a compelling 
-  slogan that captures the essence of the brand based on the website content. If you cannot 
+- slogan: OPTIONAL - A string containing a suggested slogan or tagline for the business.
+  If the website already has a clear slogan or tagline, extract it. If not, create a compelling
+  slogan that captures the essence of the brand based on the website content. If you cannot
   determine or create a suitable slogan, set this field to null.
 
-- product_description: REQUIRED - A detailed, descriptive string about the product or service 
-  being offered. This should be a comprehensive description (2-4 sentences) that captures:
-  * What the product/service is
-  * Key features, benefits, or characteristics
-  * Visual elements that would be important for creating an advertisement image
-  * The type of product (physical product, digital service, software, etc.)
-  This description will be used to generate high-quality advertisement images, so be specific 
-  about visual aspects, product appearance, and context. Examples:
-  * "A sleek, modern smartphone with a premium metal frame and vibrant OLED display, featuring 
-    advanced camera technology and minimalist design aesthetic."
-  * "An online fitness coaching platform offering personalized workout plans and nutrition guidance, 
-    with a focus on home-based exercises and progress tracking."
-  * "A luxury skincare line featuring organic ingredients, elegant packaging, and products designed 
-    for anti-aging and hydration."
+- company_name: OPTIONAL - A string containing the company or brand name. Extract the primary
+  company/brand name from the website. This should be the main business name, not including
+  legal suffixes like "Inc.", "LLC", etc. If you cannot determine a clear company name, set
+  this field to null.
+
+- product_description: REQUIRED - A concise summary of the product or service (50 words or less).
+  This should capture the essence of what the product/service is, key features, and visual elements
+  important for advertisement image generation. Do not include packaging. Keep it brief and focused. Examples:
+  * "Sleek modern smartphone with premium metal frame, OLED display, and advanced camera."
+  * "Online fitness platform with personalized workout plans and nutrition guidance."
+  * "Luxury skincare line with organic ingredients and elegant anti-aging products."
 
 CRITICAL: 
 - Browse the website thoroughly to understand its visual identity, color scheme, typography, messaging, 
@@ -397,10 +421,14 @@ async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
             if not image_url:
                 raise ValueError("No image URL returned by Grok")
 
+            # Get text placement suggestions
+            text_placement = await get_text_placement(image_url, request.product_description)
+
             return AdImageResponse(
                 image_url=image_url,
                 prompt_used=prompt_text,
-                metadata={"raw": image_entry}
+                metadata={"raw": image_entry},
+                text_placement=text_placement
             )
 
     except httpx.HTTPStatusError as e:
@@ -420,6 +448,69 @@ async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
         )
 
 
+async def get_text_placement(image_url: str, product_description: Optional[str] = None) -> dict:
+    """Get suggested text placement coordinates for the ad image."""
+    if not GROK_API_KEY:
+        return {"slogan": {"x": 50, "y": 70}, "company": {"x": 50, "y": 85}}  # Default positions
+
+    system_message = """You are an expert in advertisement design and typography placement.
+Given an ad image URL and optional product description, analyze the image composition and suggest optimal text placement coordinates for:
+- slogan: The main headline/tagline (should be prominent, usually upper portion)
+- company: The brand/company name (should be secondary, usually lower portion)
+
+Return coordinates as percentages from the top-left corner (0-100) where the text should be centered.
+Consider visual hierarchy, negative space, and readability. Avoid placing text over busy areas or important product elements.
+
+Return ONLY valid JSON with this exact structure:
+{
+  "slogan": {"x": 50.0, "y": 30.0},
+  "company": {"x": 50.0, "y": 85.0}
+}"""
+
+    user_message = f"""Ad Image URL: {image_url}
+Product Description: {product_description or 'N/A'}
+
+Please analyze this ad image and suggest optimal text placement coordinates for slogan and company name as percentages from top-left corner."""
+
+    headers = {
+        "Authorization": f"Bearer {GROK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "grok-3",
+        "messages": [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message}
+        ],
+        "temperature": 0.3
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                GROK_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=30.0
+            )
+            response.raise_for_status()
+            result = response.json()
+
+            content = result["choices"][0]["message"]["content"]
+            content = content.strip()
+            if content.startswith("```"):
+                lines = content.split("\n")
+                content = "\n".join(lines[1:-1]) if len(lines) > 2 else content
+
+            placement_data = json.loads(content)
+            return placement_data
+
+    except Exception as e:
+        # Return default positions on error
+        return {"slogan": {"x": 50, "y": 70}, "company": {"x": 50, "y": 85}}
+
+
 @app.post("/generate-demographics", response_model=AdDemographics)
 async def generate_demographics(request: AdRequest):
     """Generate ad demographics for a product using Grok API."""
@@ -436,6 +527,130 @@ async def generate_ad_image(request: AdImageRequest):
 async def analyze_brand_style(request: BrandStyleRequest):
     """Analyze a business website to extract colors, mood, font style, and slogan for ad creation."""
     return await call_grok_brand_style_api(request.product_url)
+
+
+@app.post("/overlay-text", response_model=dict)
+async def overlay_text(
+    image_url: str,
+    slogan_text: str = "",
+    company_text: str = "",
+    slogan_x: float = 50,
+    slogan_y: float = 70,
+    company_x: float = 50,
+    company_y: float = 85,
+    slogan_color: str = "#FFFFFF",
+    company_color: str = "#FFFFFF",
+    slogan_size: int = 32,
+    company_size: int = 24,
+    slogan_width: Optional[int] = None,
+    slogan_height: Optional[int] = None,
+    company_width: Optional[int] = None,
+    company_height: Optional[int] = None,
+    font_style: str = "Modern Sans-Serif"
+):
+    """Overlay text on image with feathered backdrop."""
+    try:
+        # Fetch the image
+        async with httpx.AsyncClient() as client:
+            response = await client.get(image_url, timeout=30.0, follow_redirects=True)
+            response.raise_for_status()
+            image_data = response.content
+
+        # Process image with PIL
+        from PIL import Image, ImageDraw, ImageFont, ImageFilter
+        import io
+
+        image = Image.open(io.BytesIO(image_data)).convert("RGBA")
+        draw = ImageDraw.Draw(image, "RGBA")
+
+        # Map font style to actual font
+        font_map = {
+            "Modern Sans-Serif": "arial.ttf",
+            "Elegant Serif": "times.ttf",
+            "Bold Geometric": "arialbd.ttf",
+            "Playful Rounded": "arial.ttf",
+            "Minimalist Sans": "arial.ttf",
+            "Classic Serif": "times.ttf",
+            "Tech Monospace": "cour.ttf"
+        }
+        font_name = font_map.get(font_style, "arial.ttf")
+
+        try:
+            slogan_font = ImageFont.truetype(font_name, slogan_size)
+        except:
+            slogan_font = ImageFont.load_default()
+
+        try:
+            company_font = ImageFont.truetype(font_name, company_size)
+        except:
+            company_font = ImageFont.load_default()
+
+        def draw_text_with_backdrop(text, x_percent, y_percent, font, color, width=None, height=None, backdrop_color=(0, 0, 0, 128)):
+            if not text:
+                return
+
+            img_width, img_height = image.size
+            x = int((x_percent / 100) * img_width)
+            y = int((y_percent / 100) * img_height)
+
+            # Get text bbox
+            bbox = draw.textbbox((x, y), text, font=font, anchor="mm")
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+
+            # Use provided dimensions if available, otherwise calculate from text
+            if width is not None and height is not None:
+                backdrop_width = width
+                backdrop_height = height
+            else:
+                backdrop_width = text_width + 40  # padding
+                backdrop_height = text_height + 40  # padding
+
+            # Create backdrop centered on the text position
+            backdrop_x1 = x - backdrop_width // 2
+            backdrop_y1 = y - backdrop_height // 2
+            backdrop_x2 = x + backdrop_width // 2
+            backdrop_y2 = y + backdrop_height // 2
+
+            # Create backdrop image with feathered edges
+            backdrop = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            backdrop_draw = ImageDraw.Draw(backdrop, "RGBA")
+
+            # Draw rounded rectangle with feathered edges
+            backdrop_draw.rounded_rectangle(
+                [backdrop_x1, backdrop_y1, backdrop_x2, backdrop_y2],
+                radius=15,
+                fill=backdrop_color
+            )
+
+            # Apply gaussian blur for feathering
+            backdrop = backdrop.filter(ImageFilter.GaussianBlur(radius=5))
+
+            # Composite backdrop onto main image
+            image.alpha_composite(backdrop)
+
+            # Draw text
+            draw.text((x, y), text, font=font, fill=color, anchor="mm")
+
+        # Draw slogan
+        draw_text_with_backdrop(slogan_text, slogan_x, slogan_y, slogan_font, slogan_color, slogan_width, slogan_height)
+
+        # Draw company
+        draw_text_with_backdrop(company_text, company_x, company_y, company_font, company_color, company_width, company_height)
+
+        # Convert back to bytes
+        output = io.BytesIO()
+        image.save(output, format="PNG")
+        output.seek(0)
+
+        # Return as base64
+        import base64
+        encoded = base64.b64encode(output.getvalue()).decode()
+
+        return {"image_base64": f"data:image/png;base64,{encoded}"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to overlay text: {str(e)}")
 
 
 @app.get("/")
