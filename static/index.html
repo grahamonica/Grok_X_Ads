@@ -119,6 +119,14 @@
       color: var(--muted);
     }
 
+    .step:not(.active):not(.completed) {
+      display: none;
+    }
+
+    .arrow:has(+ .step:not(.active):not(.completed)) {
+      display: none;
+    }
+
     .arrow {
       color: var(--muted);
       font-size: 14px;
@@ -579,6 +587,23 @@
 <body>
   <div class="frame">
    <header>
+     <div class="progress-indicator">
+       <div class="step active" id="step1">
+         <span class="step-label">Demographics</span>
+       </div>
+       <div class="arrow">→</div>
+       <div class="step" id="step2">
+         <span class="step-label">Brand Style</span>
+       </div>
+       <div class="arrow">→</div>
+       <div class="step" id="step3">
+         <span class="step-label">Generate</span>
+       </div>
+       <div class="arrow">→</div>
+       <div class="step" id="step4">
+         <span class="step-label">Edit</span>
+       </div>
+     </div>
      <div class="brand">
        <div class="logo" aria-label="xAI logo">
          <img src="/static/Xicon.jpg" alt="X" loading="lazy">
@@ -586,27 +611,6 @@
        <div class="brand-label">
          <div class="brand-title">Grok X Ads</div>
          <div class="brand-sub">AI-Powered Ad Creation</div>
-       </div>
-     </div>
-     <div class="progress-indicator">
-       <div class="step active" id="step1">
-         <span class="step-number">1</span>
-         <span class="step-label">Demographics</span>
-       </div>
-       <div class="arrow">→</div>
-       <div class="step" id="step2">
-         <span class="step-number">2</span>
-         <span class="step-label">Brand Style</span>
-       </div>
-       <div class="arrow">→</div>
-       <div class="step" id="step3">
-         <span class="step-number">3</span>
-         <span class="step-label">Generate</span>
-       </div>
-       <div class="arrow">→</div>
-       <div class="step" id="step4">
-         <span class="step-number">4</span>
-         <span class="step-label">Edit</span>
        </div>
      </div>
    </header>
@@ -703,7 +707,9 @@
           </div>
           <div>
             <label for="editMood">Brand mood <span class="required"></span></label>
-            <input type="text" id="editMood" placeholder="professional, playful, luxury">
+            <div class="pill-container">
+              <input type="text" id="editMood" placeholder="professional, playful, luxury">
+            </div>
           </div>
         </div>
         <div class="field-row">
