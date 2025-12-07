@@ -14,8 +14,6 @@ load_dotenv()
 
 app = FastAPI(title="Grok Ad Demographics API")
 app.mount("/static", StaticFiles(directory="static"), name="static")
-# Serve data files (e.g., tweet feeds)
-app.mount("/data", StaticFiles(directory="data"), name="data")
 
 # Environment variable for Grok API key
 GROK_API_KEY = os.getenv("GROK_API_KEY")
@@ -657,7 +655,7 @@ async def overlay_text(
 
 @app.get("/")
 async def root():
-    """Serve the single-page UI (legacy)."""
+    """Serve the single-page UI."""
     index_path = Path(__file__).parent / "static" / "index.html"
     if not index_path.exists():
         return HTMLResponse(
@@ -677,63 +675,6 @@ async def editor():
             status_code=404
         )
     return HTMLResponse(editor_path.read_text(encoding="utf-8"))
-
-
-@app.get("/app")
-@app.get("/app/{path:path}")
-async def serve_react_app(path: str = ""):
-    """Serve the React app (new workflow canvas UI)."""
-    app_dir = Path(__file__).parent / "static" / "app"
-    
-    # Try to serve the requested file
-    if path and path != "":
-        file_path = app_dir / path
-        if file_path.exists() and file_path.is_file():
-            # Determine content type
-            suffix = file_path.suffix.lower()
-            content_types = {
-                ".html": "text/html",
-                ".js": "application/javascript",
-                ".css": "text/css",
-                ".svg": "image/svg+xml",
-                ".png": "image/png",
-                ".jpg": "image/jpeg",
-                ".jpeg": "image/jpeg",
-                ".ico": "image/x-icon",
-                ".json": "application/json",
-            }
-            content_type = content_types.get(suffix, "application/octet-stream")
-            return Response(
-                content=file_path.read_bytes(),
-                media_type=content_type
-            )
-    
-    # Serve index.html for all other routes (SPA routing)
-    index_path = app_dir / "index.html"
-    if not index_path.exists():
-        return HTMLResponse(
-            content="""
-            <html>
-            <head><title>React App Not Built</title></head>
-            <body style="background:#0a0a0f;color:#f5f5f7;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
-                <div style="text-align:center;">
-                    <h1>React App Not Built</h1>
-                    <p>Run the following commands to build the React app:</p>
-                    <pre style="background:#1a1a24;padding:20px;border-radius:10px;text-align:left;">
-cd frontend
-npm install
-npm run build</pre>
-                    <p style="margin-top:20px;">Or for development mode:</p>
-                    <pre style="background:#1a1a24;padding:20px;border-radius:10px;text-align:left;">
-cd frontend
-npm run dev</pre>
-                </div>
-            </body>
-            </html>
-            """,
-            status_code=200
-        )
-    return HTMLResponse(index_path.read_text(encoding="utf-8"))
 
 
 @app.get("/proxy-image")
