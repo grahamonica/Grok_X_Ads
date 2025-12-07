@@ -304,7 +304,7 @@ comprehensive visual description of it. Return the analysis in JSON format."""
     }
     
     payload = {
-        "model": "grok-3",
+        "model": "grok-4-fast",
         "messages": [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message}
@@ -369,7 +369,7 @@ async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
     }
 
     payload = {
-        "model": "grok-imagine-v0p9",
+        "model": "grok-4-fast",
         "prompt": prompt_text,
         "n": 1
     }
