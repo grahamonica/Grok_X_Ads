@@ -97,13 +97,14 @@ const DemographicsNode = memo(({ data, selected }) => {
       {/* Content */}
       <div className="node-content">
         <div className="node-field">
-          <label className="node-label">Product URL</label>
           <input
             type="url"
             className="node-input"
+            placeholder="Product URL"
             value={productUrl}
             onChange={(e) => setProductUrl(e.target.value)}
             disabled={statusClass === 'pending' || statusClass === 'completed'}
+            aria-label="Product URL"
           />
         </div>
 
