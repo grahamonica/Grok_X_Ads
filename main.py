@@ -1,7 +1,8 @@
 import os
 import json
+import asyncio
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from dotenv import load_dotenv
 import httpx
@@ -53,10 +54,17 @@ class AdImageRequest(BaseModel):
     colors: Optional[List[str]] = None  # Brand colors in hex format (e.g., ["#FF5733", "#3498DB"])
     mood: Optional[str] = None  # Brand mood (e.g., "professional", "playful", "luxury")
     product_description: Optional[str] = None  # Product/service description for image generation
+    num_images: Optional[int] = 5  # Number of images to generate (default 5)
+
+
+class AdImage(BaseModel):
+    image_url: str
+    text_placement: Optional[dict] = None
 
 
 class AdImageResponse(BaseModel):
     image_url: str
+    images: List[AdImage]
     prompt_used: Optional[str] = None
     metadata: Optional[dict] = None
     text_placement: Optional[dict] = None  # Suggested text placement coordinates
@@ -379,8 +387,41 @@ comprehensive visual description of it. Return the analysis in JSON format."""
     )
 
 
+async def _generate_single_image(client, headers, payload, product_description):
+    """Helper to generate a single image and analyze it."""
+    response = await client.post(
+        GROK_IMAGE_API_URL,
+        headers=headers,
+        json=payload,
+        timeout=60.0
+    )
+    response.raise_for_status()
+    result = response.json()
+
+    data = result.get("data")
+    if not data or not isinstance(data, list):
+        raise ValueError("Missing image data in Grok response")
+
+    image_entry = data[0]
+    image_url = image_entry.get("url")
+    if not image_url and image_entry.get("b64_json"):
+        image_url = f"data:image/png;base64,{image_entry['b64_json']}"
+
+    if not image_url:
+        raise ValueError("No image URL returned by Grok")
+
+    # Get text placement suggestions
+    text_placement = await get_text_placement(image_url, product_description)
+    
+    return {
+        "image_url": image_url,
+        "text_placement": text_placement,
+        "raw_metadata": image_entry
+    }
+
+
 async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
-    """Call Grok image generation API to produce an ad image."""
+    """Call Grok image generation API to produce ad images."""
     if not GROK_API_KEY:
         raise HTTPException(
             status_code=500,
@@ -388,6 +429,7 @@ async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
         )
 
     prompt_text = build_image_prompt(request)
+    num_images = request.num_images or 5
 
     headers = {
         "Authorization": f"Bearer {GROK_API_KEY}",
@@ -402,35 +444,43 @@ async def call_grok_image_api(request: AdImageRequest) -> AdImageResponse:
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                GROK_IMAGE_API_URL,
-                headers=headers,
-                json=payload,
-                timeout=60.0
-            )
-            response.raise_for_status()
-            result = response.json()
+            # Generate num_images in parallel
+            tasks = [
+                _generate_single_image(client, headers, payload, request.product_description)
+                for _ in range(num_images)
+            ]
+            
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Filter successful results
+            successful_images = []
+            for res in results:
+                if isinstance(res, dict):
+                    successful_images.append(res)
+                else:
+                    print(f"Image generation failed: {res}")
+            
+            if not successful_images:
+                # If all failed, raise the first exception
+                if results and isinstance(results[0], Exception):
+                    raise results[0]
+                raise ValueError("Failed to generate any images")
 
-            data = result.get("data")
-            if not data or not isinstance(data, list):
-                raise ValueError("Missing image data in Grok response")
-
-            image_entry = data[0]
-            image_url = image_entry.get("url")
-            if not image_url and image_entry.get("b64_json"):
-                image_url = f"data:image/png;base64,{image_entry['b64_json']}"
-
-            if not image_url:
-                raise ValueError("No image URL returned by Grok")
-
-            # Get text placement suggestions
-            text_placement = await get_text_placement(image_url, request.product_description)
+            # Prepare response with all images
+            ad_images = [
+                AdImage(image_url=img["image_url"], text_placement=img["text_placement"])
+                for img in successful_images
+            ]
+            
+            # Use the first successful image as primary (for backward compatibility)
+            primary_image = successful_images[0]
 
             return AdImageResponse(
-                image_url=image_url,
+                image_url=primary_image["image_url"],
+                images=ad_images,
                 prompt_used=prompt_text,
-                metadata={"raw": image_entry},
-                text_placement=text_placement
+                metadata={"raw": primary_image["raw_metadata"]},  # Metadata from first image
+                text_placement=primary_image["text_placement"]
             )
 
     except httpx.HTTPStatusError as e:
