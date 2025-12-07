@@ -101,14 +101,8 @@
     
     .status-bar .icons {
       display: flex;
-      gap: 5px;
+      gap: 6px;
       align-items: center;
-    }
-    
-    .status-bar .icons svg {
-      width: 18px;
-      height: 18px;
-      fill: var(--text-primary);
     }
     
     /* X Header */
@@ -467,8 +461,23 @@
       <div class="status-bar">
         <span class="time">9:41</span>
         <div class="icons">
-          <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z"/></svg>
-          <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+          <!-- Cellular (iOS style) -->
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="none">
+            <rect x="0" y="8" width="3" height="3" rx="0.5" fill="#e7e9ea"/>
+            <rect x="4.5" y="5.5" width="3" height="5.5" rx="0.5" fill="#e7e9ea"/>
+            <rect x="9" y="3" width="3" height="8" rx="0.5" fill="#e7e9ea"/>
+            <rect x="13.5" y="0" width="3" height="11" rx="0.5" fill="#e7e9ea"/>
+          </svg>
+          <!-- WiFi (iOS style) -->
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M8 2.4C10.5 2.4 12.8 3.4 14.5 5L16 3.5C13.9 1.3 11.1 0 8 0C4.9 0 2.1 1.3 0 3.5L1.5 5C3.2 3.4 5.5 2.4 8 2.4ZM8 6C9.5 6 10.9 6.6 12 7.5L13.5 6C12 4.7 10.1 4 8 4C5.9 4 4 4.7 2.5 6L4 7.5C5.1 6.6 6.5 6 8 6ZM10 9.5L8 12L6 9.5C6.5 9.2 7.2 9 8 9C8.8 9 9.5 9.2 10 9.5Z" fill="#e7e9ea"/>
+          </svg>
+          <!-- Battery (iOS style) -->
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+            <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="#e7e9ea" stroke-opacity="0.4"/>
+            <path d="M23 4V8C23.8 7.6 24.5 6.9 24.5 6C24.5 5.1 23.8 4.4 23 4Z" fill="#e7e9ea" fill-opacity="0.4"/>
+            <rect x="2" y="2" width="18" height="8" rx="1.5" fill="#e7e9ea"/>
+          </svg>
         </div>
       </div>
       
@@ -520,7 +529,7 @@
     const DATA_URL = "foodie_homechef.jsonl";
     const PRODUCT_URL = "https://example.com";
     const MAX_TWEETS = 10;
-    const PROMOTED_INDEX = 2; // Insert promoted ad after 2nd tweet
+    const PROMOTED_INDEX = 2; // Insert promoted ad every 5th post (0-indexed: 0,1,2,3,4 = 5th)
     const feedEl = document.getElementById("feed");
 
     const state = {
@@ -529,6 +538,7 @@
       promotedImageUrl: null, // Cache the generated ad image
       index: 0,
       batchCount: 0,
+      totalPostsRendered: 0, // Track total posts to insert ad every 5th
     };
 
     // Get initials from name
@@ -824,7 +834,7 @@
       }
     }
 
-    // Render batch of tweets with one promoted ad
+    // Render batch of tweets with promoted ad every 5th post
     function renderBatch() {
       if (!state.tweets.length) return;
 
@@ -837,11 +847,13 @@
         // Add regular tweet
         const card = createTweetCard(tweet);
         feedEl.appendChild(card);
+        state.totalPostsRendered++;
 
-        // Insert promoted ad after PROMOTED_INDEX tweets (only once per batch)
-        if (i === PROMOTED_INDEX && state.promotedTweet) {
+        // Insert promoted ad every 5th post
+        if (state.totalPostsRendered % 5 === 0 && state.promotedTweet) {
           const promotedCard = createPromotedCard(state.promotedTweet);
           feedEl.appendChild(promotedCard);
+          state.totalPostsRendered++; // Count the ad as a post too
         }
       }
     }
