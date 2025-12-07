@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grok X Ads | Target Audience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
@@ -98,26 +100,6 @@
       background: var(--card);
       font-size: 13px;
       color: var(--muted);
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-
-    .hero .headline {
-      font-size: 36px;
-      font-weight: 600;
-      line-height: 1.15;
-    }
-
-    .hero .lede {
-      color: var(--muted);
-      font-size: 18px;
-      line-height: 1.6;
-      max-width: 620px;
     }
 
     .panel {
@@ -305,13 +287,6 @@
       border: 1px solid var(--border);
     }
 
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #1d1d1d, transparent);
-      margin: 20px 0;
-      border: none;
-    }
-
     .monospace {
       font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
       font-size: 13px;
@@ -390,7 +365,7 @@
     <header>
       <div class="brand">
         <div class="logo" aria-label="xAI logo">
-          <img src="/static/Xicon.jpg" alt="X">
+          <img src="/static/Xicon.jpg" alt="X" loading="lazy">
         </div>
         <div class="brand-label">
           <div class="brand-title">Grok X Ads</div>
@@ -398,8 +373,6 @@
         </div>
       </div>
     </header>
-
-
 
     <section id="pinnedRecap" class="panel hidden">
       <div class="panel-header">
@@ -474,9 +447,10 @@
             <textarea id="editAudience" rows="3" placeholder="Short reminder of what you want to achieve"></textarea>
           </div>
         </div>
-        <p class="note">Fields are editable. Languages and locations accept comma-separated lists. Age ranges follow Grok’s allowed bands.</p>
+        <p class="note">Fields are editable. Languages and locations accept comma-separated lists. Age ranges follow Grok's allowed bands.</p>
         <div class="actions">
           <button type="button" id="confirmBtn">Confirm target audience</button>
+          <button type="button" class="ghost-btn" id="reRunBtn">Run again</button>
           <div id="editAlert" class="alert hidden"></div>
         </div>
       </div>
@@ -489,37 +463,38 @@
       </div>
       <div class="timeline">
         <div class="tile">
-          <h4>We’re ready when you are</h4>
-          <div class="note">Target audience is pinned above. Tell me what the next module should do and we’ll hook it in.</div>
+          <h4>We're ready when you are</h4>
+          <div class="note">Target audience is pinned above. Tell me what the next module should do and we'll hook it in.</div>
         </div>
       </div>
     </section>
   </div>
 
   <script>
-    const demographicForm = document.getElementById('demographicForm');
-    const demographicSubmit = document.getElementById('demographicSubmit');
-    const clearBtn = document.getElementById('clearBtn');
-    const loaderBar = document.getElementById('loaderBar');
-    const formAlert = document.getElementById('formAlert');
-    const editPanel = document.getElementById('editPanel');
-    const editAlert = document.getElementById('editAlert');
-    const confirmBtn = document.getElementById('confirmBtn');
-    const reRunBtn = document.getElementById('reRunBtn');
-    const statusChip = document.getElementById('statusChip');
-    const pinnedRecap = document.getElementById('pinnedRecap');
-    const recapTimeline = document.getElementById('recapTimeline');
-    const nextModule = document.getElementById('nextModule');
-    const autofillBadge = document.getElementById('autofillBadge');
-
-    const productUrlInput = document.getElementById('productUrl');
-    const promptInput = document.getElementById('prompt');
-    const editProductUrl = document.getElementById('editProductUrl');
-    const editGender = document.getElementById('editGender');
-    const editAgeRange = document.getElementById('editAgeRange');
-    const editLanguage = document.getElementById('editLanguage');
-    const editLocation = document.getElementById('editLocation');
-    const editAudience = document.getElementById('editAudience');
+    // Cache DOM elements for performance
+    const elements = {
+      form: document.getElementById('demographicForm'),
+      submit: document.getElementById('demographicSubmit'),
+      clearBtn: document.getElementById('clearBtn'),
+      loader: document.getElementById('loaderBar'),
+      formAlert: document.getElementById('formAlert'),
+      editPanel: document.getElementById('editPanel'),
+      editAlert: document.getElementById('editAlert'),
+      confirmBtn: document.getElementById('confirmBtn'),
+      reRunBtn: document.getElementById('reRunBtn'),
+      pinnedRecap: document.getElementById('pinnedRecap'),
+      recapTimeline: document.getElementById('recapTimeline'),
+      nextModule: document.getElementById('nextModule'),
+      autofillBadge: document.getElementById('autofillBadge'),
+      productUrl: document.getElementById('productUrl'),
+      prompt: document.getElementById('prompt'),
+      editProductUrl: document.getElementById('editProductUrl'),
+      editGender: document.getElementById('editGender'),
+      editAgeRange: document.getElementById('editAgeRange'),
+      editLanguage: document.getElementById('editLanguage'),
+      editLocation: document.getElementById('editLocation'),
+      editAudience: document.getElementById('editAudience')
+    };
 
     const ageRangeOptions = [
       { label: 'All ages', min: null, max: null },
@@ -546,81 +521,67 @@
       { label: '50+', min: 50, max: null }
     ];
 
-    function ageKey(min, max) {
-      const left = min === null || min === undefined ? 'null' : String(min);
-      const right = max === null || max === undefined ? 'null' : String(max);
+    // Optimized helper functions
+    const ageKey = (min, max) => {
+      const left = min == null ? 'null' : String(min);
+      const right = max == null ? 'null' : String(max);
       return `${left}-${right}`;
-    }
+    };
 
+    const ageRangeFromApi = (ageRange) => {
+      if (!ageRange) return ageKey(null, null);
+      return ageKey(ageRange.min ?? null, ageRange.max ?? null);
+    };
+
+    const parseList = (input) => {
+      const value = input.trim();
+      return value ? value.split(',').map(item => item.trim()).filter(Boolean) : null;
+    };
+
+    // Initialize age select dropdown
     function hydrateAgeSelect() {
-      editAgeRange.innerHTML = '';
+      const fragment = document.createDocumentFragment();
       ageRangeOptions.forEach(({ label, min, max }) => {
         const option = document.createElement('option');
         option.value = ageKey(min, max);
         option.textContent = label;
-        editAgeRange.appendChild(option);
+        fragment.appendChild(option);
       });
+      elements.editAgeRange.appendChild(fragment);
     }
 
-    function setStatus(text) {
-      statusChip.textContent = text;
-    }
+    // Optimized DOM update functions
+    const setLoading = (isLoading) => {
+      elements.submit.disabled = isLoading;
+      elements.loader.classList.toggle('hidden', !isLoading);
+    };
 
-    function showAlert(el, message, kind = 'error') {
+    const showAlert = (el, message, kind = 'error') => {
       el.textContent = message;
-      el.classList.remove('hidden', 'success', 'error');
-      el.classList.add(kind);
-    }
+      el.className = `alert ${kind}`;
+    };
 
-    function clearAlert(el) {
+    const clearAlert = (el) => {
       el.textContent = '';
-      el.classList.add('hidden');
-      el.classList.remove('success', 'error');
-    }
+      el.className = 'alert hidden';
+    };
 
-    function setLoading(isLoading) {
-      if (isLoading) {
-        demographicSubmit.disabled = true;
-        loaderBar.classList.remove('hidden');
-        setStatus('Calling /generate-demographics…');
-      } else {
-        demographicSubmit.disabled = false;
-        loaderBar.classList.add('hidden');
-      }
-    }
+    const setEditFields = (data, intent) => {
+      // Batch DOM updates
+      requestAnimationFrame(() => {
+        elements.editProductUrl.value = data.product_url || elements.productUrl.value.trim();
+        elements.editGender.value = data.gender || '';
+        elements.editAgeRange.value = ageRangeFromApi(data.age_range);
+        elements.editLanguage.value = Array.isArray(data.language) ? data.language.join(', ') : '';
+        elements.editLocation.value = Array.isArray(data.location) ? data.location.join(', ') : '';
+        elements.editAudience.value = intent || elements.prompt.value.trim();
+      });
+    };
 
-    function ageRangeFromApi(ageRange) {
-      if (!ageRange) return ageKey(null, null);
-      return ageKey(
-        ageRange.min === undefined ? null : ageRange.min,
-        ageRange.max === undefined ? null : ageRange.max
-      );
-    }
-
-    function setEditFields(data, intent) {
-      editProductUrl.value = data.product_url || productUrlInput.value.trim();
-      editGender.value = data.gender || '';
-      editAgeRange.value = ageRangeFromApi(data.age_range);
-
-      const languages = Array.isArray(data.language) ? data.language.join(', ') : '';
-      const locations = Array.isArray(data.location) ? data.location.join(', ') : '';
-
-      editLanguage.value = languages;
-      editLocation.value = locations;
-      editAudience.value = intent || promptInput.value.trim();
-    }
-
-    function parseList(input) {
-      const value = input.trim();
-      if (!value) return null;
-      return value.split(',').map(item => item.trim()).filter(Boolean);
-    }
-
-    function summarizeSelection(data) {
+    const summarizeSelection = (data) => {
+      const ageLabel = ageRangeOptions.find(opt => opt.value === ageRangeFromApi(data.age_range))?.label || 'custom';
       const timeline = document.createElement('div');
       timeline.className = 'tile';
-      const ageLabel = ageRangeOptions.find(opt => opt.value === ageRangeFromApi(data.age_range))?.label || 'custom';
-
       timeline.innerHTML = `
         <h4>Target audience locked</h4>
         <div class="chip-row">
@@ -635,33 +596,52 @@
         ${data.intent ? `<div class="note">Intent: ${data.intent}</div>` : ''}
       `;
       return timeline;
-    }
+    };
 
-    function scrollToNextModule() {
-      nextModule.classList.remove('hidden');
-      nextModule.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    const scrollToNextModule = () => {
+      elements.nextModule.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        elements.nextModule.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    };
 
-    demographicForm.addEventListener('submit', async (event) => {
+    // Optimized fetch with abort controller and keepalive
+    let currentController = null;
+
+    elements.form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      clearAlert(formAlert);
-      clearAlert(editAlert);
+      clearAlert(elements.formAlert);
+      clearAlert(elements.editAlert);
 
-      const productUrl = productUrlInput.value.trim();
-      const prompt = promptInput.value.trim();
+      const productUrl = elements.productUrl.value.trim();
+      const prompt = elements.prompt.value.trim();
 
       if (!productUrl || !prompt) {
-        showAlert(formAlert, 'Both fields are required before we can call Grok.');
+        showAlert(elements.formAlert, 'Both fields are required before we can call Grok.');
         return;
       }
 
+      // Abort any pending request
+      if (currentController) {
+        currentController.abort();
+      }
+
+      currentController = new AbortController();
       setLoading(true);
 
       try {
+        const startTime = performance.now();
+        
         const response = await fetch('/generate-demographics', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ product_url: productUrl, prompt })
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ product_url: productUrl, prompt }),
+          signal: currentController.signal,
+          keepalive: true,
+          priority: 'high'
         });
 
         if (!response.ok) {
@@ -670,57 +650,70 @@
         }
 
         const result = await response.json();
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+        
         setEditFields(result, prompt);
-        editPanel.classList.remove('hidden');
-        autofillBadge.textContent = 'autofill by Grok';
-        setStatus('Demographics returned');
+        elements.editPanel.classList.remove('hidden');
+        elements.autofillBadge.textContent = 'autofill by Grok';
+        
+        console.log(`API call completed in ${elapsed}s`);
       } catch (error) {
-        showAlert(formAlert, error.message || 'Unable to fetch demographics right now.');
-        setStatus('Error');
+        if (error.name === 'AbortError') {
+          return; // User cancelled, don't show error
+        }
+        showAlert(elements.formAlert, error.message || 'Unable to fetch demographics right now.');
+        console.error('Demographics API error:', error);
       } finally {
         setLoading(false);
+        currentController = null;
       }
     });
 
+    elements.clearBtn.addEventListener('click', () => {
+      elements.productUrl.value = '';
+      elements.prompt.value = '';
+      clearAlert(elements.formAlert);
+    });
 
-    confirmBtn.addEventListener('click', () => {
-      clearAlert(editAlert);
+    elements.confirmBtn.addEventListener('click', () => {
+      clearAlert(elements.editAlert);
 
-      const product_url = editProductUrl.value.trim();
-      const gender = editGender.value;
-      const [min, max] = editAgeRange.value.split('-');
+      const product_url = elements.editProductUrl.value.trim();
+      const gender = elements.editGender.value;
+      const [min, max] = elements.editAgeRange.value.split('-');
       const age_range = {
         min: min === 'null' ? null : Number(min),
         max: max === 'null' ? null : Number(max)
       };
-      const language = parseList(editLanguage.value);
-      const location = parseList(editLocation.value);
-      const intent = editAudience.value.trim();
+      const language = parseList(elements.editLanguage.value);
+      const location = parseList(elements.editLocation.value);
+      const intent = elements.editAudience.value.trim();
 
       if (!product_url || !gender) {
-        showAlert(editAlert, 'Product URL and gender cannot be empty when confirming.');
+        showAlert(elements.editAlert, 'Product URL and gender cannot be empty when confirming.');
         return;
       }
 
       const finalProfile = { product_url, gender, age_range, language, location, intent };
-      recapTimeline.innerHTML = '';
-      recapTimeline.appendChild(summarizeSelection(finalProfile));
-      pinnedRecap.classList.remove('hidden');
-      setStatus('Audience pinned · ready for next module');
+      elements.recapTimeline.innerHTML = '';
+      elements.recapTimeline.appendChild(summarizeSelection(finalProfile));
+      elements.pinnedRecap.classList.remove('hidden');
       scrollToNextModule();
     });
 
-    reRunBtn.addEventListener('click', () => {
-      if (!productUrlInput.value.trim()) {
-        productUrlInput.value = editProductUrl.value.trim();
+    elements.reRunBtn.addEventListener('click', () => {
+      if (!elements.productUrl.value.trim()) {
+        elements.productUrl.value = elements.editProductUrl.value.trim();
       }
-      if (!promptInput.value.trim()) {
-        promptInput.value = editAudience.value.trim();
+      if (!elements.prompt.value.trim()) {
+        elements.prompt.value = elements.editAudience.value.trim();
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setStatus('Adjust the intent and run again');
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     });
 
+    // Initialize on page load
     hydrateAgeSelect();
   </script>
 </body>

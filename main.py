@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiless
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 load_dotenv()
