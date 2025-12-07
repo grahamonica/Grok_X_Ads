@@ -47,11 +47,82 @@
     }
 
     header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
       margin-bottom: 32px;
+      padding: 16px 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .progress-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--ghost);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .step-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .step.active .step-number {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .step.active .step-label {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .step.completed .step-number {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .step.completed .step-label {
+      color: var(--muted);
+    }
+
+    .arrow {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0 4px;
     }
 
     .brand {
@@ -507,17 +578,38 @@
 </head>
 <body>
   <div class="frame">
-    <header>
-      <div class="brand">
-        <div class="logo" aria-label="xAI logo">
-          <img src="/static/Xicon.jpg" alt="X" loading="lazy">
-        </div>
-        <div class="brand-label">
-          <div class="brand-title">Grok X Ads</div>
-          <div class="brand-sub">Product → Demographics → Brand Style → Ad image</div>
-        </div>
-      </div>
-    </header>
+   <header>
+     <div class="brand">
+       <div class="logo" aria-label="xAI logo">
+         <img src="/static/Xicon.jpg" alt="X" loading="lazy">
+       </div>
+       <div class="brand-label">
+         <div class="brand-title">Grok X Ads</div>
+         <div class="brand-sub">AI-Powered Ad Creation</div>
+       </div>
+     </div>
+     <div class="progress-indicator">
+       <div class="step active" id="step1">
+         <span class="step-number">1</span>
+         <span class="step-label">Demographics</span>
+       </div>
+       <div class="arrow">→</div>
+       <div class="step" id="step2">
+         <span class="step-number">2</span>
+         <span class="step-label">Brand Style</span>
+       </div>
+       <div class="arrow">→</div>
+       <div class="step" id="step3">
+         <span class="step-number">3</span>
+         <span class="step-label">Generate</span>
+       </div>
+       <div class="arrow">→</div>
+       <div class="step" id="step4">
+         <span class="step-number">4</span>
+         <span class="step-label">Edit</span>
+       </div>
+     </div>
+   </header>
 
     <section id="pinnedRecap" class="panel hidden">
       <div class="panel-header">
@@ -544,7 +636,6 @@
         </div>
         <div class="actions">
           <button type="submit" id="demographicSubmit">Get demographics</button>
-          <button type="button" class="ghost-btn" id="clearBtn">Reset fields</button>
           <div id="formAlert" class="alert hidden"></div>
         </div>
         <div id="loaderBar" class="loader hidden" aria-hidden="true"></div>
@@ -595,7 +686,6 @@
         <p class="note">Fields are editable. Languages and locations accept comma-separated lists. Age ranges follow Grok's allowed bands.</p>
         <div class="actions">
           <button type="button" id="confirmBtn">Confirm target audience</button>
-          <button type="button" class="ghost-btn" id="reRunBtn">Run again</button>
           <div id="editAlert" class="alert hidden"></div>
         </div>
       </div>
@@ -638,7 +728,6 @@
         <p class="note">Colors should be hex codes separated by commas. All fields are editable after auto-analysis.</p>
         <div class="actions">
           <button type="button" id="confirmBrandStyleBtn">Confirm brand style</button>
-          <button type="button" class="ghost-btn" id="reRunBrandStyleBtn">Analyze again</button>
           <div id="brandStyleAlert" class="alert hidden"></div>
         </div>
         <div id="brandStyleLoader" class="loader hidden" aria-hidden="true"></div>
@@ -752,19 +841,16 @@
     const elements = {
       form: document.getElementById('demographicForm'),
       submit: document.getElementById('demographicSubmit'),
-      clearBtn: document.getElementById('clearBtn'),
       loader: document.getElementById('loaderBar'),
       formAlert: document.getElementById('formAlert'),
       editPanel: document.getElementById('editPanel'),
       editAlert: document.getElementById('editAlert'),
       confirmBtn: document.getElementById('confirmBtn'),
-      reRunBtn: document.getElementById('reRunBtn'),
       brandStylePanel: document.getElementById('brandStylePanel'),
       brandStyleBadge: document.getElementById('brandStyleBadge'),
       brandStyleAlert: document.getElementById('brandStyleAlert'),
       brandStyleLoader: document.getElementById('brandStyleLoader'),
       confirmBrandStyleBtn: document.getElementById('confirmBrandStyleBtn'),
-      reRunBrandStyleBtn: document.getElementById('reRunBrandStyleBtn'),
       colorPickers: document.getElementById('colorPickers'),
       addColorBtn: document.getElementById('addColorBtn'),
       editMood: document.getElementById('editMood'),
@@ -1061,6 +1147,7 @@
         setBrandStyleFields(result);
         elements.brandStylePanel.classList.remove('hidden');
         elements.brandStyleBadge.textContent = 'autofill by Grok';
+        updateProgressIndicator(2); // Stay on step 2 while analyzing
 
         console.log(`Brand style API call completed in ${elapsed}s`);
       } catch (error) {
@@ -1122,6 +1209,7 @@
         setEditFields(result, prompt);
         elements.editPanel.classList.remove('hidden');
         elements.autofillBadge.textContent = 'autofill by Grok';
+        updateProgressIndicator(2); // Move to step 2
         
         console.log(`API call completed in ${elapsed}s`);
       } catch (error) {
@@ -1136,11 +1224,6 @@
       }
     });
 
-    elements.clearBtn.addEventListener('click', () => {
-      elements.productUrl.value = '';
-      elements.prompt.value = '';
-      clearAlert(elements.formAlert);
-    });
 
     elements.confirmBtn.addEventListener('click', async () => {
       clearAlert(elements.editAlert);
@@ -1173,17 +1256,6 @@
       await callBrandStyleAPI(product_url);
     });
 
-    elements.reRunBtn.addEventListener('click', () => {
-      if (!elements.productUrl.value.trim()) {
-        elements.productUrl.value = elements.editProductUrl.value.trim();
-      }
-      if (!elements.prompt.value.trim()) {
-        elements.prompt.value = elements.editAudience.value.trim();
-      }
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-    });
 
     elements.confirmBrandStyleBtn.addEventListener('click', () => {
       clearAlert(elements.brandStyleAlert);
@@ -1204,14 +1276,9 @@
 
       // Show the next module (ad image generation)
       scrollToNextModule();
+      updateProgressIndicator(3); // Move to step 3
     });
 
-    elements.reRunBrandStyleBtn.addEventListener('click', () => {
-      const productUrl = elements.editProductUrl.value.trim();
-      if (productUrl) {
-        callBrandStyleAPI(productUrl);
-      }
-    });
 
     elements.generateAdBtn.addEventListener('click', async () => {
       clearAlert(elements.adImageAlert);
@@ -1288,8 +1355,33 @@
       }
     });
 
+    // Progress indicator functions
+    function updateProgressIndicator(currentStep) {
+      // Reset all steps
+      for (let i = 1; i <= 4; i++) {
+        const stepEl = document.getElementById(`step${i}`);
+        stepEl.classList.remove('active', 'completed');
+      }
+
+      // Set current step as active
+      const currentStepEl = document.getElementById(`step${currentStep}`);
+      if (currentStepEl) {
+        currentStepEl.classList.add('active');
+      }
+
+      // Set previous steps as completed
+      for (let i = 1; i < currentStep; i++) {
+        const stepEl = document.getElementById(`step${i}`);
+        if (stepEl) {
+          stepEl.classList.remove('active');
+          stepEl.classList.add('completed');
+        }
+      }
+    }
+
     // Initialize on page load
     hydrateAgeSelect();
+    updateProgressIndicator(1); // Start with step 1 active
 
     // Color picker functionality
     elements.addColorBtn.addEventListener('click', () => {
@@ -1488,6 +1580,20 @@
 
       elements.editorAdImage.src = `/proxy-image?image_url=${encodeURIComponent(imageUrl)}`;
 
+      // Auto-populate company name if not provided
+      if (!company) {
+        const demographics = JSON.parse(localStorage.getItem('finalDemographics') || '{}');
+        const productUrl = demographics.product_url || '';
+        // Extract domain name as company name
+        try {
+          const url = new URL(productUrl);
+          company = url.hostname.replace('www.', '').split('.')[0];
+          company = company.charAt(0).toUpperCase() + company.slice(1);
+        } catch (e) {
+          company = 'Your Brand';
+        }
+      }
+
       // Set text content
       elements.editorSloganInput.value = slogan || '';
       elements.editorCompanyInput.value = company || '';
@@ -1533,6 +1639,7 @@
 
       // Show editor
       elements.editorSection.classList.remove('hidden');
+      updateProgressIndicator(4); // Move to step 4
       requestAnimationFrame(() => {
         elements.editorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
