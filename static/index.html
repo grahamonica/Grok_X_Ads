@@ -55,6 +55,82 @@
       justify-content: space-between;
       gap: 16px;
       margin-bottom: 32px;
+      padding: 16px 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .progress-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--ghost);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .step-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .step.active .step-number {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .step.active .step-label {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .step.completed .step-number {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .step.completed .step-label {
+      color: var(--muted);
+    }
+
+    .step:not(.active):not(.completed) {
+      display: none;
+    }
+
+    .arrow:has(+ .step:not(.active):not(.completed)) {
+      display: none;
+    }
+
+    .arrow {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0 4px;
     }
 
     .brand {
@@ -633,221 +709,6 @@
       margin-top: 8px;
     }
 
-    /* Step 5: iPhone Preview */
-    .preview-wrapper {
-      display: flex;
-      justify-content: center;
-      padding: 16px 0 24px;
-    }
-    .iphone-preview {
-      position: relative;
-      width: 393px;
-      height: 820px;
-      background: #0f0f0f;
-      border-radius: 48px;
-      padding: 12px;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(255,255,255,0.05);
-      overflow: hidden;
-    }
-    .iphone-preview .dynamic-island {
-      position: absolute;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
-      height: 32px;
-      background: #000;
-      border-radius: 20px;
-      z-index: 10;
-    }
-    .iphone-preview .screen {
-      position: relative;
-      background: #000;
-      border-radius: 38px;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    .iphone-preview .status-bar {
-      height: 50px;
-      padding: 12px 18px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      color: #e7e9ea;
-      font-weight: 600;
-      font-size: 15px;
-    }
-    .iphone-preview .status-bar .icons {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .iphone-preview .x-header {
-      padding: 8px 16px 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #1f1f1f;
-      background: #000;
-    }
-    .iphone-preview .x-header .profile-pic {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 600;
-      color: white;
-    }
-    .iphone-preview .tabs {
-      display: flex;
-      border-bottom: 1px solid #1f1f1f;
-      background: #000;
-    }
-    .iphone-preview .tab {
-      flex: 1;
-      padding: 12px 0;
-      text-align: center;
-      font-size: 15px;
-      font-weight: 500;
-      color: #71767b;
-      position: relative;
-    }
-    .iphone-preview .tab.active {
-      color: #e7e9ea;
-      font-weight: 700;
-    }
-    .iphone-preview .tab.active::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 48px;
-      height: 3px;
-      background: #1d9bf0;
-      border-radius: 2px;
-    }
-    .iphone-preview .feed {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 12px 80px;
-      background: #000;
-    }
-    .iphone-preview .feed::-webkit-scrollbar { width: 0; }
-    .iphone-preview .tweet {
-      padding: 12px 0;
-      border-bottom: 1px solid #1f1f1f;
-      display: flex;
-      gap: 10px;
-    }
-    .iphone-preview .tweet-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ff6b6b, #feca57);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 700;
-      color: white;
-    }
-    .iphone-preview .tweet-content { flex: 1; min-width: 0; }
-    .iphone-preview .tweet-header {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-wrap: wrap;
-      margin-bottom: 2px;
-    }
-    .iphone-preview .tweet-name { font-weight: 700; font-size: 15px; color: #e7e9ea; }
-    .iphone-preview .tweet-handle, .iphone-preview .tweet-time { font-size: 14px; color: #71767b; }
-    .iphone-preview .tweet-time::before { content: '·'; margin: 0 4px; }
-    .iphone-preview .tweet-text {
-      font-size: 15px;
-      line-height: 1.4;
-      color: #e7e9ea;
-      margin: 6px 0 10px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-    .iphone-preview .tweet-media {
-      border-radius: 16px;
-      overflow: hidden;
-      background: #111;
-      margin-bottom: 10px;
-      position: relative;
-    }
-    .iphone-preview .tweet-media img,
-    .iphone-preview .tweet-media video {
-      width: 100%;
-      display: block;
-      object-fit: cover;
-      max-height: 320px;
-    }
-    .iphone-preview .tweet-media video { background: #000; }
-    /* Twitter-style action bar */
-    .tweet-actions {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      color: #71767b;
-      font-size: 13px;
-    }
-    .tweet-actions .action {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .tweet-actions .action svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
-    }
-    .tweet-actions .action span { line-height: 1; }
-    .tweet-actions .action.reply:hover { color: #1d9bf0; }
-    .tweet-actions .action.retweet:hover { color: #00ba7c; }
-    .tweet-actions .action.like:hover { color: #f91880; }
-    .iphone-preview .tweet-actions {
-      display: flex;
-      justify-content: space-between;
-      max-width: 280px;
-      color: #71767b;
-      font-size: 13px;
-      gap: 0;
-    }
-    .iphone-preview .action { display: flex; align-items: center; gap: 6px; }
-    .iphone-preview .promoted {
-      background: rgba(29, 155, 240, 0.06);
-      border-left: 3px solid #1d9bf0;
-      padding-left: 10px;
-      border-radius: 4px;
-    }
-    .iphone-preview .promoted-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      color: #71767b;
-      font-size: 12px;
-      margin-bottom: 6px;
-    }
-    .iphone-preview .bottom-nav {
-      display: flex;
-      justify-content: space-around;
-      padding: 12px 0 18px;
-      border-top: 1px solid #1f1f1f;
-      background: #000;
-    }
-    .iphone-preview .bottom-nav svg { width: 24px; height: 24px; fill: #e7e9ea; }
-
     @media (max-width: 640px) {
       header {
         align-items: flex-start;
@@ -864,17 +725,34 @@
 </head>
 <body>
   <div class="frame">
-    <header>
-      <div class="brand">
-        <div class="logo" aria-label="xAI logo">
-          <img src="/static/Xicon.jpg" alt="X" loading="lazy">
-        </div>
-        <div class="brand-label">
-          <div class="brand-title">Grok X Ads</div>
-          <div class="brand-sub">Product → Demographics → Brand Style → Ad image</div>
-        </div>
-      </div>
-    </header>
+   <header>
+     <div class="progress-indicator">
+       <div class="step active" id="step1">
+         <span class="step-label">Demographics</span>
+       </div>
+       <div class="arrow">→</div>
+       <div class="step" id="step2">
+         <span class="step-label">Brand Style</span>
+       </div>
+       <div class="arrow">→</div>
+       <div class="step" id="step3">
+         <span class="step-label">Generate</span>
+       </div>
+       <div class="arrow">→</div>
+       <div class="step" id="step4">
+         <span class="step-label">Edit</span>
+       </div>
+     </div>
+     <div class="brand">
+       <div class="logo" aria-label="xAI logo">
+         <img src="/static/Xicon.jpg" alt="X" loading="lazy">
+       </div>
+       <div class="brand-label">
+         <div class="brand-title">Grok X Ads</div>
+         <div class="brand-sub">AI-Powered Ad Creation</div>
+       </div>
+     </div>
+   </header>
 
     <section id="pinnedRecap" class="panel hidden">
       <div class="panel-header">
@@ -1242,13 +1120,7 @@
       editorCompanyOpacityValue: document.getElementById('editorCompanyOpacityValue'),
       editorCompanyColorPreview: document.getElementById('editorCompanyColorPreview'),
       editorDownloadBtn: document.getElementById('editorDownloadBtn'),
-      editorResetBtn: document.getElementById('editorResetBtn'),
-      previewSection: document.getElementById('previewSection'),
-      previewFeed: document.getElementById('previewFeed'),
-      addColorBtn: document.getElementById('addColorBtn'),
-      colorPickers: document.getElementById('colorPickers'),
-      editFontStyle: document.getElementById('fontSearch'),
-      statusPill: document.getElementById('statusPill')
+      editorResetBtn: document.getElementById('editorResetBtn')
     };
 
     const ageRangeOptions = [
@@ -1291,18 +1163,6 @@
     const parseList = (input) => {
       const value = input.trim();
       return value ? value.split(',').map(item => item.trim()).filter(Boolean) : null;
-    };
-
-    // Preview (iPhone feed) constants/state
-    const PREVIEW_DATA_URL = '/static/iphone/foodie_homechef.jsonl';
-    const PREVIEW_BATCH_SIZE = 10;
-    const PREVIEW_AD_INTERVAL = 5;
-    const previewState = {
-      tweets: [],
-      index: 0,
-      totalPostsRendered: 0,
-      promotedImageUrl: null,
-      loaded: false,
     };
 
     // Initialize age select dropdown
@@ -1648,7 +1508,11 @@
 
         setBrandStyleFields(result);
         elements.brandStylePanel.classList.remove('hidden');
+<<<<<<< HEAD
         // elements.brandStyleBadge.textContent = 'autofill by Grok';
+=======
+        elements.brandStyleBadge.textContent = 'autofill by Grok';
+>>>>>>> 715eac0 (loading fixed)
         updateProgressIndicator(2); // Stay on step 2 while analyzing
         elements.brandStyleBadge.textContent = 'autofill by Grok';
 
@@ -1720,10 +1584,15 @@
 
         setEditFields(result, prompt);
         elements.editPanel.classList.remove('hidden');
+<<<<<<< HEAD
         // elements.autofillBadge.textContent = 'autofill by Grok';
         updateProgressIndicator(2); // Move to step 2
         elements.autofillBadge.textContent = 'autofill by Grok';
         
+=======
+        elements.autofillBadge.textContent = 'autofill by Grok';
+        updateProgressIndicator(2); // Move to step 2
+>>>>>>> 715eac0 (loading fixed)
         console.log(`API call completed in ${elapsed}s`);
       } catch (error) {
         if (error.name === 'AbortError') {
@@ -1891,6 +1760,30 @@
       }
     });
 
+    // Progress indicator functions
+    function updateProgressIndicator(currentStep) {
+      // Reset all steps
+      for (let i = 1; i <= 4; i++) {
+        const stepEl = document.getElementById(`step${i}`);
+        stepEl.classList.remove('active', 'completed');
+      }
+
+      // Set current step as active
+      const currentStepEl = document.getElementById(`step${currentStep}`);
+      if (currentStepEl) {
+        currentStepEl.classList.add('active');
+      }
+
+      // Set previous steps as completed
+      for (let i = 1; i < currentStep; i++) {
+        const stepEl = document.getElementById(`step${i}`);
+        if (stepEl) {
+          stepEl.classList.remove('active');
+          stepEl.classList.add('completed');
+        }
+      }
+    }
+
     // Initialize on page load
     hydrateAgeSelect();
     updateProgressIndicator(1); // Start with step 1 active
@@ -1965,202 +1858,6 @@
       elements.editorSloganOverlay.style.transform = 'translate(-50%, -50%)';
       elements.editorCompanyOverlay.style.transform = 'translate(-50%, -50%)';
     });
-
-    // ---------- Step 5 Preview (iPhone feed) ----------
-    const previewInitials = (name = '') => {
-      const parts = name.trim().split(/\s+/).filter(Boolean);
-      if (!parts.length) return '🍳';
-      return parts.slice(0, 2).map(p => p[0]).join('').toUpperCase();
-    };
-
-    const previewTimeAgo = (dateStr) => {
-      if (!dateStr) return '';
-      const now = new Date();
-      const date = new Date(dateStr);
-      const diff = Math.floor((now - date) / 1000);
-      if (diff < 60) return `${diff}s`;
-      if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-      if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-      return `${Math.floor(diff / 86400)}d`;
-    };
-
-    const escapeHtml = (text) => {
-      const div = document.createElement('div');
-      div.textContent = text ?? '';
-      return div.innerHTML;
-    };
-
-    const previewGetMedia = (tweet, mediaMap) => {
-      const keys = tweet.attachments?.media_keys || [];
-      for (const key of keys) {
-        const media = mediaMap.get(key);
-        if (!media) continue;
-        if (media.type === 'photo' && media.url) return { type: 'photo', url: media.url };
-        if (media.type === 'video' && Array.isArray(media.variants)) {
-          const mp4s = media.variants
-            .filter(v => v.content_type === 'video/mp4' && v.url)
-            .sort((a, b) => (b.bit_rate || 0) - (a.bit_rate || 0));
-          if (mp4s.length) return { type: 'video', url: mp4s[0].url };
-        }
-      }
-      return null;
-    };
-
-    async function loadPreviewData() {
-      if (previewState.loaded) return;
-      const res = await fetch(PREVIEW_DATA_URL);
-      if (!res.ok) throw new Error('Failed to load preview data');
-      const raw = await res.text();
-      const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-      const collected = [];
-
-      for (let i = 0; i < Math.min(lines.length, PREVIEW_BATCH_SIZE); i++) {
-        try {
-          const entry = JSON.parse(lines[i]);
-          const tweet = entry.tweet;
-          if (!tweet) continue;
-          const mediaMap = new Map();
-          (entry.includes?.media || []).forEach(m => mediaMap.set(m.media_key, m));
-          const users = entry.includes?.users || [];
-          const author = users.find(u => u.id === tweet.author_id) || {};
-          collected.push({
-            id: tweet.id,
-            text: tweet.text || '',
-            authorName: author.name || 'Foodie',
-            authorHandle: author.username ? `@${author.username}` : '@foodie',
-            createdAt: tweet.created_at,
-            media: previewGetMedia(tweet, mediaMap),
-          });
-        } catch (err) {
-          console.warn('Skip bad preview line', i, err);
-        }
-      }
-
-      previewState.tweets = collected;
-      previewState.loaded = true;
-    }
-
-    const createPreviewCard = (tweet) => {
-      const card = document.createElement('div');
-      card.className = 'tweet';
-      const avatarBg = 'linear-gradient(135deg, #ff6b6b, #feca57)';
-      let mediaHtml = '';
-      if (tweet.media) {
-        if (tweet.media.type === 'photo') {
-          mediaHtml = `<div class="tweet-media"><img src="${tweet.media.url}" alt="tweet media" loading="lazy"></div>`;
-        } else if (tweet.media.type === 'video') {
-          mediaHtml = `<div class="tweet-media"><video src="${tweet.media.url}" controls playsinline preload="metadata"></video></div>`;
-        }
-      }
-      card.innerHTML = `
-        <div class="tweet-avatar" style="background:${avatarBg}">${previewInitials(tweet.authorName)}</div>
-        <div class="tweet-content">
-          <div class="tweet-header">
-            <span class="tweet-name">${escapeHtml(tweet.authorName)}</span>
-            <span class="tweet-handle">${escapeHtml(tweet.authorHandle)}</span>
-            <span class="tweet-time">${previewTimeAgo(tweet.createdAt)}</span>
-          </div>
-          <div class="tweet-text">${escapeHtml(tweet.text)}</div>
-          ${mediaHtml}
-          <div class="tweet-actions">
-            <div class="action reply">
-              <svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>
-              <span>12</span>
-            </div>
-            <div class="action retweet">
-              <svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>
-              <span>34</span>
-            </div>
-            <div class="action like">
-              <svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>
-              <span>128</span>
-            </div>
-            <div class="action views">
-              <svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>
-              <span>2.4K</span>
-            </div>
-          </div>
-        </div>
-      `;
-      return card;
-    };
-
-    const createPromotedPreviewCard = (text) => {
-      const card = document.createElement('div');
-      card.className = 'tweet promoted';
-      const imgSrc = previewState.promotedImageUrl || '';
-      const mediaHtml = imgSrc
-        ? `<div class="tweet-media"><img src="${imgSrc}" alt="Ad image"></div>`
-        : `<div class="tweet-media" style="height:200px;display:grid;place-items:center;color:#71767b;">Generate the ad first to preview</div>`;
-      card.innerHTML = `
-        <div class="tweet-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">🔥</div>
-        <div class="tweet-content">
-          <div class="tweet-header">
-            <span class="tweet-name">Foodie Brands</span>
-            <span class="tweet-handle">@FoodieBrands</span>
-            <span class="tweet-time">Promoted</span>
-          </div>
-          <div class="promoted-badge">Promoted</div>
-          <div class="tweet-text">${escapeHtml(text || 'Your ad goes here')}</div>
-          ${mediaHtml}
-          <div class="tweet-actions">
-            <div class="action reply">
-              <svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>
-              <span>18</span>
-            </div>
-            <div class="action retweet">
-              <svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>
-              <span>52</span>
-            </div>
-            <div class="action like">
-              <svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>
-              <span>210</span>
-            </div>
-            <div class="action views">
-              <svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>
-              <span>5.1K</span>
-            </div>
-          </div>
-        </div>
-      `;
-      return card;
-    };
-
-    function renderPreviewBatch() {
-      if (!previewState.tweets.length) return;
-      const feed = elements.previewFeed;
-      for (let i = 0; i < PREVIEW_BATCH_SIZE; i++) {
-        const tweet = previewState.tweets[previewState.index];
-        previewState.index = (previewState.index + 1) % previewState.tweets.length;
-        const card = createPreviewCard(tweet);
-        feed.appendChild(card);
-        previewState.totalPostsRendered++;
-        if (previewState.totalPostsRendered % PREVIEW_AD_INTERVAL === 0) {
-          const promotedCard = createPromotedPreviewCard(tweet.text);
-          feed.appendChild(promotedCard);
-          previewState.totalPostsRendered++;
-        }
-      }
-    }
-
-    async function showPreview() {
-      await loadPreviewData();
-      previewState.promotedImageUrl = window.previewImageUrl || previewState.promotedImageUrl;
-      previewState.index = 0;
-      previewState.totalPostsRendered = 0;
-      elements.previewFeed.innerHTML = '';
-      renderPreviewBatch();
-      elements.previewSection.classList.remove('hidden');
-      updateProgressIndicator(5);
-      const onScrollPreview = () => {
-        const { scrollTop, scrollHeight, clientHeight } = elements.previewFeed;
-        if (scrollHeight - scrollTop - clientHeight < 200) {
-          renderPreviewBatch();
-        }
-      };
-      elements.previewFeed.addEventListener('scroll', onScrollPreview);
-      elements.previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
 
     elements.editorDownloadBtn.addEventListener('click', async () => {
       try {
