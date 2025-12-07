@@ -30,7 +30,7 @@
       padding: 0;
       background: radial-gradient(circle at 20% 20%, #111 0%, #0a0a0a 35%, #050505 100%);
       color: var(--ink);
-      font-family: 'Chirp', 'Space Grotesk', 'SF Pro Display', 'Neue Haas Grotesk', sans-serif;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       min-height: 100vh;
       letter-spacing: -0.01em;
     }
@@ -53,6 +53,18 @@
       gap: 16px;
       margin-bottom: 32px;
     }
+
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+      margin-bottom: 0;
+      backdrop-filter: blur(10px);
+    }
+
 
     .brand {
       display: flex;
@@ -344,7 +356,82 @@
       background: rgba(248, 113, 113, 0.1);
     }
 
-    .font-preview {
+    .pill-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      min-height: 32px;
+      padding: 8px;
+      border-radius: 8px;
+      background: var(--ghost);
+      border: 1px solid var(--border);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .pill:hover {
+      background: var(--raised);
+      border-color: var(--muted);
+    }
+
+    .pill.color-pill {
+      padding: 6px 8px;
+    }
+
+    .pill .color-circle {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+    }
+
+    .pill .remove-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      margin-left: 4px;
+      font-size: 16px;
+      line-height: 1;
+      border-radius: 2px;
+    }
+
+    .pill .remove-btn:hover {
+      color: #f87171;
+      background: rgba(248, 113, 113, 0.1);
+    }
+
+    .pill-search {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--ghost);
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .pill-search:focus {
+      outline: none;
+      border-color: var(--muted);
+    }
+
+    .font-style-display {
       padding: 12px;
       border-radius: 8px;
       background: var(--ghost);
@@ -354,6 +441,36 @@
       min-height: 20px;
       display: flex;
       align-items: center;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+
+    .font-style-display:hover {
+      border-color: var(--muted);
+    }
+
+    .font-options {
+      margin-top: 8px;
+      border-radius: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .font-option {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.2s ease;
+    }
+
+    .font-option:last-child {
+      border-bottom: none;
+    }
+
+    .font-option:hover {
+      background: var(--ghost);
     }
 
     .timeline {
@@ -425,18 +542,18 @@
   </style>
 </head>
 <body>
-  <div class="frame">
-    <header>
-      <div class="brand">
-        <div class="logo" aria-label="xAI logo">
-          <img src="/static/Xicon.jpg" alt="X" loading="lazy">
-        </div>
-        <div class="brand-label">
-          <div class="brand-title">Grok X Ads</div>
-          <div class="brand-sub">Product → Demographics → Brand Style → Ad image</div>
-        </div>
+ <div class="frame">
+  <header class="sticky-header">
+    <div class="brand">
+      <div class="logo" aria-label="xAI logo">
+        <img src="/static/Xicon.jpg" alt="X" loading="lazy">
       </div>
-    </header>
+      <div class="brand-label">
+        <div class="brand-title">Grok X Ads</div>
+        <div class="brand-sub">Product → Demographics → Brand Style → Ad image</div>
+      </div>
+    </div>
+  </header>
 
     <section id="pinnedRecap" class="panel hidden">
       <div class="panel-header">
@@ -514,7 +631,6 @@
         <p class="note">Fields are editable. Languages and locations accept comma-separated lists. Age ranges follow Grok's allowed bands.</p>
         <div class="actions">
           <button type="button" id="confirmBtn">Confirm target audience</button>
-          <button type="button" class="ghost-btn" id="reRunBtn">Run again</button>
           <div id="editAlert" class="alert hidden"></div>
         </div>
       </div>
@@ -526,38 +642,39 @@
         <span class="pill" id="brandStyleBadge">analyzing</span>
       </div>
       <div class="stack">
-        <div class="field-row">
-          <div>
-            <label>Brand colors <span class="required"></span></label>
-            <div id="colorPickers" class="color-pickers">
-              <!-- Color pickers will be dynamically added here -->
-            </div>
-            <button type="button" id="addColorBtn" class="ghost-btn" style="margin-top: 8px; font-size: 13px;">+ Add color</button>
+        <div>
+          <label>Brand colors <span class="required"></span></label>
+          <div id="colorPills" class="pill-container">
+            <!-- Color pills will be dynamically added here -->
           </div>
-          <div>
-            <label for="editMood">Brand mood <span class="required"></span></label>
-            <input type="text" id="editMood" placeholder="professional, playful, luxury">
+          <input type="text" id="colorSearch" class="pill-search" placeholder="Search or add color (hex code)">
+        </div>
+        <div>
+          <label>Brand mood <span class="required"></span></label>
+          <div id="moodPills" class="pill-container">
+            <!-- Mood pills will be dynamically added here -->
+          </div>
+          <input type="text" id="moodSearch" class="pill-search" placeholder="Search or add mood">
+        </div>
+        <div>
+          <label>Font style <span class="required"></span></label>
+          <div id="fontStyleDisplay" class="font-style-display">Select a font style...</div>
+          <input type="text" id="fontSearch" class="pill-search" placeholder="Search font styles">
+          <div id="fontOptions" class="font-options hidden">
+            <!-- Font options will be populated here -->
           </div>
         </div>
-        <div class="field-row">
-          <div>
-            <label for="editFontStyle">Font style <span class="required"></span></label>
-            <input type="text" id="editFontStyle" placeholder="Modern Sans-Serif, Elegant Serif">
-            <div id="fontPreview" class="font-preview">The quick brown fox jumps over the lazy dog</div>
-          </div>
-          <div>
-            <label for="editSlogan">Slogan</label>
-            <input type="text" id="editSlogan" placeholder="Optional tagline or slogan">
-          </div>
+        <div>
+          <label for="editSlogan">Slogan</label>
+          <input type="text" id="editSlogan" placeholder="Optional tagline or slogan">
         </div>
         <div>
           <label for="editProductDescription">Product description <span class="required"></span></label>
           <textarea id="editProductDescription" rows="4" placeholder="Detailed description of the product/service for ad generation"></textarea>
         </div>
-        <p class="note">Colors should be hex codes separated by commas. All fields are editable after auto-analysis.</p>
+        <p class="note">Click pills to remove them. All fields are editable after auto-analysis.</p>
         <div class="actions">
           <button type="button" id="confirmBrandStyleBtn">Confirm brand style</button>
-          <button type="button" class="ghost-btn" id="reRunBrandStyleBtn">Analyze again</button>
           <div id="brandStyleAlert" class="alert hidden"></div>
         </div>
         <div id="brandStyleLoader" class="loader hidden" aria-hidden="true"></div>
@@ -601,11 +718,13 @@
       brandStyleLoader: document.getElementById('brandStyleLoader'),
       confirmBrandStyleBtn: document.getElementById('confirmBrandStyleBtn'),
       reRunBrandStyleBtn: document.getElementById('reRunBrandStyleBtn'),
-      colorPickers: document.getElementById('colorPickers'),
-      addColorBtn: document.getElementById('addColorBtn'),
-      editMood: document.getElementById('editMood'),
-      editFontStyle: document.getElementById('editFontStyle'),
-      fontPreview: document.getElementById('fontPreview'),
+      colorPills: document.getElementById('colorPills'),
+      colorSearch: document.getElementById('colorSearch'),
+      moodPills: document.getElementById('moodPills'),
+      moodSearch: document.getElementById('moodSearch'),
+      fontStyleDisplay: document.getElementById('fontStyleDisplay'),
+      fontSearch: document.getElementById('fontSearch'),
+      fontOptions: document.getElementById('fontOptions'),
       editSlogan: document.getElementById('editSlogan'),
       editProductDescription: document.getElementById('editProductDescription'),
       generateAdBtn: document.getElementById('generateAdBtn'),
@@ -622,7 +741,9 @@
       editAgeRange: document.getElementById('editAgeRange'),
       editLanguage: document.getElementById('editLanguage'),
       editLocation: document.getElementById('editLocation'),
-      editAudience: document.getElementById('editAudience')
+      editAudience: document.getElementById('editAudience'),
+      reRunBtn: document.getElementById('reRunBtn'),
+      reRunBrandStyleBtn: document.getElementById('reRunBrandStyleBtn')
     };
 
     const ageRangeOptions = [
@@ -734,69 +855,87 @@
       });
     };
 
-    const createColorPicker = (color = '#000000') => {
-      const item = document.createElement('div');
-      item.className = 'color-picker-item';
+    const createPill = (text, type = 'text', color = null) => {
+      const pill = document.createElement('span');
+      pill.className = `pill ${type === 'color' ? 'color-pill' : ''}`;
 
-      const colorInput = document.createElement('input');
-      colorInput.type = 'color';
-      colorInput.value = color;
-
-      const textInput = document.createElement('input');
-      textInput.type = 'text';
-      textInput.value = color.toUpperCase();
-      textInput.maxLength = 7;
+      if (type === 'color') {
+        const colorCircle = document.createElement('span');
+        colorCircle.className = 'color-circle';
+        colorCircle.style.backgroundColor = text;
+        pill.appendChild(colorCircle);
+        pill.appendChild(document.createTextNode(text.toUpperCase()));
+      } else {
+        pill.textContent = text;
+      }
 
       const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
+      removeBtn.className = 'remove-btn';
       removeBtn.textContent = '×';
-      removeBtn.title = 'Remove color';
-
-      // Sync color picker with text input
-      colorInput.addEventListener('input', () => {
-        textInput.value = colorInput.value.toUpperCase();
-      });
-
-      textInput.addEventListener('input', (e) => {
-        const value = e.target.value.toUpperCase();
-        if (/^#[0-9A-F]{6}$/.test(value)) {
-          colorInput.value = value;
-        }
-      });
+      removeBtn.title = 'Remove';
 
       removeBtn.addEventListener('click', () => {
-        item.remove();
+        pill.remove();
       });
 
-      item.appendChild(colorInput);
-      item.appendChild(textInput);
-      item.appendChild(removeBtn);
-
-      return item;
+      pill.appendChild(removeBtn);
+      return pill;
     };
 
-    const getColorsFromPickers = () => {
-      const colors = [];
-      elements.colorPickers.querySelectorAll('.color-picker-item input[type="text"]').forEach(input => {
-        const color = input.value.trim();
-        if (color && /^#[0-9A-F]{6}$/.test(color)) {
-          colors.push(color);
+    const addPillToContainer = (container, text, type = 'text', color = null) => {
+      // Check if pill already exists
+      const existingPills = container.querySelectorAll('.pill');
+      for (const pill of existingPills) {
+        const pillText = type === 'color' ? pill.textContent.replace('×', '').trim() : pill.textContent.replace('×', '').trim();
+        if (pillText.toLowerCase() === text.toLowerCase()) {
+          return; // Don't add duplicate
+        }
+      }
+
+      container.appendChild(createPill(text, type, color));
+    };
+
+    const getPillsFromContainer = (container) => {
+      const pills = [];
+      container.querySelectorAll('.pill').forEach(pill => {
+        if (pill.classList.contains('color-pill')) {
+          // Extract color from pill text (remove × and get the hex)
+          const text = pill.textContent.replace('×', '').trim();
+          if (/^#[0-9A-F]{6}$/i.test(text)) {
+            pills.push(text);
+          }
+        } else {
+          // Extract text from pill (remove ×)
+          const text = pill.textContent.replace('×', '').trim();
+          if (text) pills.push(text);
         }
       });
-      return colors;
+      return pills;
     };
 
-    const setColorPickers = (colors) => {
-      elements.colorPickers.innerHTML = '';
-      if (Array.isArray(colors)) {
-        colors.forEach(color => {
-          elements.colorPickers.appendChild(createColorPicker(color));
-        });
-      }
-      // Always have at least one color picker
-      if (elements.colorPickers.children.length === 0) {
-        elements.colorPickers.appendChild(createColorPicker());
-      }
+    const setupPillSearch = (searchInput, container, type = 'text', suggestions = []) => {
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const value = searchInput.value.trim();
+          if (value) {
+            if (type === 'color' && !/^#[0-9A-F]{6}$/i.test(value)) {
+              // Invalid color format
+              return;
+            }
+            addPillToContainer(container, value, type);
+            searchInput.value = '';
+          }
+        }
+      });
+
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        if (query.length > 0 && suggestions.length > 0) {
+          const filtered = suggestions.filter(item => item.toLowerCase().includes(query));
+          // Could show suggestions here if needed
+        }
+      });
     };
 
     const updateFontPreview = () => {
@@ -821,12 +960,70 @@
 
     const setBrandStyleFields = (data) => {
       requestAnimationFrame(() => {
-        setColorPickers(data.colors);
-        elements.editMood.value = data.mood || '';
-        elements.editFontStyle.value = data.font_style || '';
+        // Set color pills
+        elements.colorPills.innerHTML = '';
+        if (Array.isArray(data.colors)) {
+          data.colors.forEach(color => {
+            addPillToContainer(elements.colorPills, color, 'color');
+          });
+        }
+
+        // Set mood pills
+        elements.moodPills.innerHTML = '';
+        if (data.mood) {
+          addPillToContainer(elements.moodPills, data.mood, 'text');
+        }
+
+        // Set font style display
+        elements.fontStyleDisplay.textContent = data.font_style || 'Select a font style...';
+        updateFontDisplay(data.font_style || '');
+
         elements.editSlogan.value = data.slogan || '';
         elements.editProductDescription.value = data.product_description || '';
-        updateFontPreview();
+      });
+    };
+
+    const updateFontDisplay = (fontStyle) => {
+      let fontFamily = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+
+      // Map common font style descriptions to actual fonts
+      if (fontStyle.toLowerCase().includes('serif')) {
+        fontFamily = "'Times New Roman', 'Georgia', serif";
+      } else if (fontStyle.toLowerCase().includes('mono') || fontStyle.toLowerCase().includes('tech')) {
+        fontFamily = "'Courier New', 'Monaco', monospace";
+      } else if (fontStyle.toLowerCase().includes('bold') || fontStyle.toLowerCase().includes('geometric')) {
+        fontFamily = "'Arial Black', 'Impact', sans-serif";
+      } else if (fontStyle.toLowerCase().includes('playful') || fontStyle.toLowerCase().includes('rounded')) {
+        fontFamily = "'Comic Sans MS', cursive";
+      } else if (fontStyle.toLowerCase().includes('elegant') || fontStyle.toLowerCase().includes('classic')) {
+        fontFamily = "'Georgia', 'Times New Roman', serif";
+      }
+
+      elements.fontStyleDisplay.style.fontFamily = fontFamily;
+    };
+
+    const populateFontOptions = () => {
+      const fontStyles = [
+        'Modern Sans-Serif',
+        'Elegant Serif',
+        'Bold Geometric',
+        'Playful Rounded',
+        'Minimalist Sans',
+        'Classic Serif',
+        'Tech Monospace'
+      ];
+
+      elements.fontOptions.innerHTML = '';
+      fontStyles.forEach(style => {
+        const option = document.createElement('div');
+        option.className = 'font-option';
+        option.textContent = style;
+        option.addEventListener('click', () => {
+          elements.fontStyleDisplay.textContent = style;
+          updateFontDisplay(style);
+          elements.fontOptions.classList.add('hidden');
+        });
+        elements.fontOptions.appendChild(option);
       });
     };
 
@@ -834,6 +1031,28 @@
       elements.confirmBrandStyleBtn.disabled = isLoading;
       elements.brandStyleLoader.classList.toggle('hidden', !isLoading);
       elements.brandStyleBadge.textContent = isLoading ? 'analyzing' : 'autofill';
+    };
+
+
+    const startRotatingMessages = (messages, interval = 2000) => {
+      let messageIndex = 0;
+      const statusPill = document.querySelector('.panel-title + span');
+
+      const rotateMessage = () => {
+        if (statusPill && messages[messageIndex]) {
+          statusPill.textContent = messages[messageIndex];
+          messageIndex = (messageIndex + 1) % messages.length;
+        }
+      };
+
+      // Start immediately
+      rotateMessage();
+
+      // Set up interval
+      const intervalId = setInterval(rotateMessage, interval);
+
+      // Return function to stop the rotation
+      return () => clearInterval(intervalId);
     };
 
     // Optimized fetch with abort controller and keepalive
@@ -849,6 +1068,14 @@
       }
 
       currentBrandStyleController = new AbortController();
+
+      // Start rotating messages for brand style analysis
+      const stopRotating = startRotatingMessages([
+        'Scanning website design...',
+        'Extracting brand colors...',
+        'Analyzing visual style...',
+        'Crafting brand profile...'
+      ]);
 
       try {
         const startTime = performance.now();
@@ -887,6 +1114,9 @@
       } finally {
         setBrandStyleLoading(false);
         currentBrandStyleController = null;
+        stopRotating(); // Stop rotating messages
+        // Reset status pill
+        document.querySelector('.panel-title + span').textContent = '';
       }
     };
 
@@ -911,12 +1141,20 @@
       currentController = new AbortController();
       setLoading(true);
 
+      // Start rotating messages
+      const stopRotating = startRotatingMessages([
+        'Analyzing your product...',
+        'Finding ideal customers...',
+        'Building demographics profile...',
+        'Almost ready...'
+      ]);
+
       try {
         const startTime = performance.now();
-        
+
         const response = await fetch('/generate-demographics', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
@@ -933,11 +1171,11 @@
 
         const result = await response.json();
         const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
-        
+
         setEditFields(result, prompt);
         elements.editPanel.classList.remove('hidden');
         elements.autofillBadge.textContent = 'autofill by Grok';
-        
+
         console.log(`API call completed in ${elapsed}s`);
       } catch (error) {
         if (error.name === 'AbortError') {
@@ -948,6 +1186,9 @@
       } finally {
         setLoading(false);
         currentController = null;
+        stopRotating(); // Stop rotating messages
+        // Reset status pill
+        document.querySelector('.panel-title + span').textContent = '';
       }
     });
 
@@ -984,6 +1225,7 @@
       // Store demographics for later use
       localStorage.setItem('finalDemographics', JSON.stringify(finalProfile));
 
+
       // Auto-call brand style API after confirming demographics
       await callBrandStyleAPI(product_url);
     });
@@ -1003,19 +1245,25 @@
     elements.confirmBrandStyleBtn.addEventListener('click', () => {
       clearAlert(elements.brandStyleAlert);
 
-      const colors = getColorsFromPickers();
-      const mood = elements.editMood.value.trim();
-      const fontStyle = elements.editFontStyle.value.trim();
+      const colors = getPillsFromContainer(elements.colorPills);
+      const mood = getPillsFromContainer(elements.moodPills);
+      const fontStyle = elements.fontStyleDisplay.textContent === 'Select a font style...' ? '' : elements.fontStyleDisplay.textContent;
       const slogan = elements.editSlogan.value.trim() || null;
       const productDescription = elements.editProductDescription.value.trim();
 
-      if (!colors || colors.length === 0 || !mood || !fontStyle || !productDescription) {
+      if (!colors || colors.length === 0 || !mood || mood.length === 0 || !fontStyle || !productDescription) {
         showAlert(elements.brandStyleAlert, 'Colors, mood, font style, and product description are required.');
         return;
       }
 
       // Store brand style data for later use
-      window.brandStyleData = { colors, mood, fontStyle, slogan, productDescription };
+      window.brandStyleData = {
+        colors,
+        mood: mood[0], // Take first mood
+        fontStyle,
+        slogan,
+        productDescription
+      };
 
       // Show the next module (ad image generation)
       scrollToNextModule();
@@ -1075,12 +1323,14 @@
 
         const result = await response.json();
 
+        // Log prompt to terminal only
+        console.log('Ad Image Generation Prompt:', result.prompt_used);
+
         // Display the generated image
         const imageContainer = document.createElement('div');
         imageContainer.innerHTML = `
           <h4>Generated Ad Image</h4>
           <img src="${result.image_url}" alt="Generated ad" style="max-width: 100%; border-radius: 12px; margin-top: 12px;">
-          <p class="note" style="margin-top: 8px;">Prompt used: ${result.prompt_used}</p>
         `;
 
         // Replace the generate button area with the image

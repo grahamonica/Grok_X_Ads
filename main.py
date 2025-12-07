@@ -78,6 +78,7 @@ async def call_grok_api(product_url: str, custom_prompt: str) -> AdDemographics:
             status_code=500,
             detail="GROK_API_KEY environment variable is not set"
         )
+
     
     system_message = """You are an expert in advertising demographics analysis. 
 Given a product URL and additional context, analyze and return the TOP target demographic 
@@ -132,7 +133,7 @@ Please analyze this product and provide the ad demographics in JSON format."""
     }
     
     payload = {
-        "model": "grok-4-0709",
+        "model": "grok-3",
         "messages": [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message}
@@ -303,7 +304,7 @@ comprehensive visual description of it. Return the analysis in JSON format."""
     }
     
     payload = {
-        "model": "grok-4-0709",
+        "model": "grok-3",
         "messages": [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message}
