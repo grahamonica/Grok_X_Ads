@@ -374,8 +374,8 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 10px;
-      border-radius: 8px;
+      padding: 8px 12px;
+      border-radius: 20px;
       background: var(--ghost);
       border: 1px solid var(--border);
     }
@@ -698,8 +698,8 @@
             <label>Brand colors <span class="required"></span></label>
             <div id="colorPickers" class="color-pickers">
               <!-- Color pickers will be dynamically added here -->
+              <button type="button" id="addColorBtn" class="color-picker-item ghost-btn" style="font-size: 13px;">+ Add color</button>
             </div>
-            <button type="button" id="addColorBtn" class="ghost-btn" style="margin-top: 8px; font-size: 13px;">+ Add color</button>
           </div>
           <div>
             <label for="editMood">Brand mood <span class="required"></span></label>
@@ -982,8 +982,6 @@
           <span>Product: <strong>${data.product_url}</strong></span>
           <span>Gender: <strong>${data.gender || '—'}</strong></span>
           <span>Age: <strong>${ageLabel}</strong></span>
-        </div>
-        <div class="chip-row">
           <span>Language: <strong>${(data.language || ['—']).join(', ')}</strong></span>
           <span>Location: <strong>${(data.location || ['—']).join(', ')}</strong></span>
         </div>
@@ -1042,7 +1040,7 @@
 
     const getColorsFromPickers = () => {
       const colors = [];
-      elements.colorPickers.querySelectorAll('.color-picker-item input[type="text"]').forEach(input => {
+      elements.colorPickers.querySelectorAll('.color-picker-item:not(#addColorBtn) input[type="text"]').forEach(input => {
         const color = input.value.trim();
         if (color && /^#[0-9A-F]{6}$/.test(color)) {
           colors.push(color);
@@ -1052,15 +1050,19 @@
     };
 
     const setColorPickers = (colors) => {
+      // Clear existing color pickers but keep the add button
+      const addButton = elements.addColorBtn;
       elements.colorPickers.innerHTML = '';
+      elements.colorPickers.appendChild(addButton);
+
       if (Array.isArray(colors)) {
         colors.forEach(color => {
-          elements.colorPickers.appendChild(createColorPicker(color));
+          elements.colorPickers.insertBefore(createColorPicker(color), addButton);
         });
       }
       // Always have at least one color picker
-      if (elements.colorPickers.children.length === 0) {
-        elements.colorPickers.appendChild(createColorPicker());
+      if (elements.colorPickers.children.length === 1) { // Only add button
+        elements.colorPickers.insertBefore(createColorPicker(), addButton);
       }
     };
 
@@ -1115,6 +1117,13 @@
 
       currentBrandStyleController = new AbortController();
 
+      // Start rotating messages for brand style analysis
+      const stopRotating = startRotatingMessages([
+        'Fetching brand styling',
+        'keeping your brand looking good',
+        'capturing your style'
+      ]);
+
       try {
         const startTime = performance.now();
 
@@ -1153,6 +1162,7 @@
       } finally {
         setBrandStyleLoading(false);
         currentBrandStyleController = null;
+        stopRotating(); // Stop rotating messages
       }
     };
 
